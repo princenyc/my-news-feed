@@ -41,19 +41,23 @@
     
     <div id="feed"></div>
 
-    <footer>
+   <footer>
         <div class="footer-grid">
             <div>
-                <h4>How it Works</h4>
-                <p>The Signal uses a weighted algorithm to prioritize news. <b>Impact Boosts</b> (+300) are given to stories about policy, legislation, and civil rights. <b>Freshness Boosts</b> (+500) ensure breaking news stays at the top. <b>PR Penalties</b> (-150) bury generic press releases.</p>
+                <h4>The Algorithm</h4>
+                <p>The Signal uses a weighted engine to prioritize "High-Signal" news. <b>Freshness Boosts</b> (+500) ensure breaking news stays at the top, while stories older than 48 hours receive a <b>Recency Penalty</b> (-400) to keep the feed current.</p>
             </div>
             <div>
-                <h4>Current Sources</h4>
-                <ul id="source-list">
-                    </ul>
+                <h4>What is the "IMPACT" tag?</h4>
+                <p>The <span class="impact-badge">IMPACT</span> badge is automatically applied to stories that mention <b>structural levers of power</b>, such as legislation, court rulings, voting policy, or institutional accountability. These stories are given a <b>+300 point boost</b> to ensure systemic news isn't buried by culture or fluff.</p>
             </div>
         </div>
-        <p style="margin-top: 30px; opacity: 0.7;">&copy; 2026 Signal. Built for transparency and community focus. A Chartreuse Explosives experiment</p>
+        <div style="margin-top: 40px; border-top: 1px solid #eee; pt-20">
+             <h4>Our Active Sources</h4>
+             <ul id="source-list" style="columns: 3; -webkit-columns: 3; -moz-columns: 3;">
+                </ul>
+        </div>
+        <p style="margin-top: 30px; opacity: 0.7;">&copy; 2026 The Signal. Developed for Mental Armor and Community Intelligence.</p>
     </footer>
 
     <script>
