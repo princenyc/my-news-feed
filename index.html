@@ -24,6 +24,13 @@
         .summary-box { display: none; background: var(--card); padding: 15px; margin-top: 10px; font-family: sans-serif; font-size: 0.9rem; border-left: 4px solid var(--text); }
         .score-tag { background: rgba(128,128,128,0.1); padding: 2px 8px; border-radius: 15px; font-size: 0.65rem; margin-left: 10px; color: var(--accent); }
         .impact-badge { color: #d44; font-weight: bold; border: 1px solid #d44; padding: 1px 4px; font-size: 0.6rem; margin-left: 5px; }
+        
+        /* Methodology Footer Styles */
+        footer { margin-top: 80px; padding-top: 20px; border-top: 1px solid var(--accent); font-family: sans-serif; font-size: 0.8rem; color: var(--accent); }
+        .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        footer h4 { color: var(--text); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        footer ul { list-style: none; padding: 0; }
+        footer li { margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -31,14 +38,28 @@
     <div class="ticker-wrap"><div class="ticker" id="ticker-content">Syncing global signal...</div></div>
     <div class="header"><h1>The Signal</h1><p><i>A Curated Newsfeed for the Black Community</i></p></div>
     <input type="text" id="searchBar" placeholder="Search the signal..." onkeyup="filterSearch()">
+    
     <div id="feed"></div>
 
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <h4>How it Works</h4>
+                <p>The Signal uses a weighted algorithm to prioritize news. <b>Impact Boosts</b> (+300) are given to stories about policy, legislation, and civil rights. <b>Freshness Boosts</b> (+500) ensure breaking news stays at the top. <b>PR Penalties</b> (-150) bury generic press releases.</p>
+            </div>
+            <div>
+                <h4>Current Sources</h4>
+                <ul id="source-list">
+                    </ul>
+            </div>
+        </div>
+        <p style="margin-top: 30px; opacity: 0.7;">&copy; 2026 The Signal. Built for transparency and community focus.</p>
+    </footer>
+
     <script>
-        // Scoring Keywords [cite: 65-80, 85-90]
         const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "education", "labor", "housing", "sentencing", "accountability"];
         const PR_PENALTY_WORDS = ["announces", "partnership", "fundraiser", "ribbon cutting", "grant awarded"];
 
-        // Your Curated Sources [cite: 4, 6, 8, 10, 111-125]
         const SOURCES = [
             { name: "The AFRO", url: "https://afro.com/feed/", tier: 300 },
             { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300 },
@@ -65,9 +86,17 @@
         if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
 
         async function init() {
+            // Fill the footer source list automatically
+            const listEl = document.getElementById('source-list');
+            SOURCES.sort((a,b) => a.name.localeCompare(b.name)).forEach(s => {
+                const li = document.createElement('li');
+                li.innerText = s.name;
+                listEl.appendChild(li);
+            });
+
             let allPosts = [];
-            const MAX_TOTAL_STORIES = 15; // Your requested limit
-            const MAX_PER_SOURCE = 3;    // DIVERSITY CAP: Max stories per source
+            const MAX_TOTAL_STORIES = 15;
+            const MAX_PER_SOURCE = 3;
 
             for (const src of SOURCES) {
                 try {
@@ -81,30 +110,25 @@
                 } catch (e) { console.error("Error with:", src.name); }
             }
 
-            // 1. Sort by score [cite: 42]
             allPosts.sort((a, b) => b.score - a.score);
 
-            // 2. Diversity Selection Logic
             const finalSelection = [];
             const seenHeadlines = new Set();
             const sourceCounts = {};
 
             for (const post of allPosts) {
                 if (finalSelection.length >= MAX_TOTAL_STORIES) break;
-
                 const slug = post.title.toLowerCase().replace(/[^a-z0-9]/g, "").substring(0, 50);
                 const source = post.sourceName;
-
-                if (seenHeadlines.has(slug)) continue; // Skip duplicates
+                if (seenHeadlines.has(slug)) continue;
                 if (!sourceCounts[source]) sourceCounts[source] = 0;
-                if (sourceCounts[source] >= MAX_PER_SOURCE) continue; // Skip if source is flooding
+                if (sourceCounts[source] >= MAX_PER_SOURCE) continue;
 
                 finalSelection.push(post);
                 seenHeadlines.add(slug);
                 sourceCounts[source]++;
             }
 
-            // 3. Render
             document.getElementById('ticker-content').innerHTML = finalSelection.slice(0, 8).map(p => ` • ${p.title}`).join(' ');
             const container = document.getElementById('feed');
             container.innerHTML = "";
@@ -127,19 +151,25 @@
         }
 
         function calculateScore(item, tier, content) {
-            let score = tier; // Authority Weight [cite: 48, 51-54]
+            let score = tier; // Base Authority Weight [cite: 48, 51-54]
             let impact = false;
-
             const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
-            if (hoursOld < 6) score += 500; // Recency Weight [cite: 57-58]
-if (hoursOld > 48) score -= 400;
+
+            // LEVER: Recency Boost [cite: 57]
+            if (hoursOld < 6) score += 500; 
+            
+            // LEVER: Old News Penalty [cite: 61-62]
+            if (hoursOld > 48) score -= 400; 
+
+            // LEVER: Impact Boost [cite: 64, 81]
             if (IMPACT_WORDS.some(word => content.includes(word))) { 
-                score += 300; // Structural Impact Boost [cite: 64, 81]
+                score += 300; 
                 impact = true; 
             }
             
+            // LEVER: PR Penalty [cite: 83, 91]
             if (tier <= 100 && PR_PENALTY_WORDS.some(word => content.includes(word))) {
-                score -= 150; // Press Release Penalty [cite: 83, 91]
+                score -= 150; 
             }
 
             return { total: Math.max(0, score), isImpact: impact };
