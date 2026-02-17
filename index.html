@@ -34,22 +34,21 @@
     <div id="feed"></div>
 
     <script>
+        // Scoring Keywords [cite: 65-80, 85-90]
         const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "education", "labor", "housing", "sentencing", "accountability"];
+        const PR_PENALTY_WORDS = ["announces", "partnership", "fundraiser", "ribbon cutting", "grant awarded"];
+
+        // Your Curated Sources [cite: 4, 6, 8, 10, 111-125]
         const SOURCES = [
-            // Your Original Sources [cite: 4, 6, 8, 10, 15, 17, 19, 30, 32, 35, 38]
             { name: "The AFRO", url: "https://afro.com/feed/", tier: 300 },
             { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300 },
             { name: "The Root", url: "https://theroot.com/rss", tier: 220 },
             { name: "The Grio", url: "https://thegrio.com/feed", tier: 220 },
-            
-            // New Top Tier (Substack & YouTube) [cite: 111-118]
             { name: "Dr. Stacey Patton", url: "https://drstaceypatton1865.substack.com/feed", tier: 300 },
             { name: "Don Lemon", url: "https://donlemon.substack.com/feed", tier: 300 },
             { name: "Joy-Ann Reid", url: "https://www.joyannreid.com/feed", tier: 300 },
             { name: "Roland Martin (YT)", url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCvXonL_6f6VatpLeS_vM19g", tier: 300 },
             { name: "African Diaspora News (YT)", url: "https://www.youtube.com/feeds/videos.xml?channel_id=UC6iGstVz-pInL5UunmS_XfA", tier: 300 },
-            
-            // New 2nd Tier [cite: 120-125]
             { name: "Sentencing Project", url: "https://sentencing.substack.com/feed", tier: 220 },
             { name: "Court Accountability", url: "https://courtaccountability.substack.com/feed", tier: 220 },
             { name: "Legalytics", url: "https://legalytics.substack.com/feed", tier: 220 },
@@ -67,6 +66,9 @@
 
         async function init() {
             let allPosts = [];
+            const MAX_TOTAL_STORIES = 15; // Your requested limit
+            const MAX_PER_SOURCE = 3;    // DIVERSITY CAP: Max stories per source
+
             for (const src of SOURCES) {
                 try {
                     const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`);
@@ -79,23 +81,34 @@
                 } catch (e) { console.error("Error with:", src.name); }
             }
 
-            const uniquePosts = [];
-            const seenHeadlines = new Set();
+            // 1. Sort by score [cite: 42]
             allPosts.sort((a, b) => b.score - a.score);
 
-            allPosts.forEach(post => {
-                const simplified = post.title.toLowerCase().replace(/[^a-z0-9]/g, "").substring(0, 50);
-                if (!seenHeadlines.has(simplified)) {
-                    uniquePosts.push(post);
-                    seenHeadlines.add(simplified);
-                }
-            });
+            // 2. Diversity Selection Logic
+            const finalSelection = [];
+            const seenHeadlines = new Set();
+            const sourceCounts = {};
 
-            const top15 = uniquePosts.slice(0, 15);
-            document.getElementById('ticker-content').innerHTML = top15.slice(0, 8).map(p => ` • ${p.title}`).join(' ');
+            for (const post of allPosts) {
+                if (finalSelection.length >= MAX_TOTAL_STORIES) break;
 
+                const slug = post.title.toLowerCase().replace(/[^a-z0-9]/g, "").substring(0, 50);
+                const source = post.sourceName;
+
+                if (seenHeadlines.has(slug)) continue; // Skip duplicates
+                if (!sourceCounts[source]) sourceCounts[source] = 0;
+                if (sourceCounts[source] >= MAX_PER_SOURCE) continue; // Skip if source is flooding
+
+                finalSelection.push(post);
+                seenHeadlines.add(slug);
+                sourceCounts[source]++;
+            }
+
+            // 3. Render
+            document.getElementById('ticker-content').innerHTML = finalSelection.slice(0, 8).map(p => ` • ${p.title}`).join(' ');
             const container = document.getElementById('feed');
-            top15.forEach((post, index) => {
+            container.innerHTML = "";
+            finalSelection.forEach((post, index) => {
                 const div = document.createElement('div');
                 div.className = 'article';
                 div.innerHTML = `
@@ -114,11 +127,21 @@
         }
 
         function calculateScore(item, tier, content) {
-            let score = tier;
+            let score = tier; // Authority Weight [cite: 48, 51-54]
             let impact = false;
+
             const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
-            if (hoursOld < 6) score += 250;
-            if (IMPACT_WORDS.some(word => content.includes(word))) { score += 300; impact = true; }
+            if (hoursOld < 6) score += 250; // Recency Weight [cite: 57-58]
+
+            if (IMPACT_WORDS.some(word => content.includes(word))) { 
+                score += 300; // Structural Impact Boost [cite: 64, 81]
+                impact = true; 
+            }
+            
+            if (tier <= 100 && PR_PENALTY_WORDS.some(word => content.includes(word))) {
+                score -= 150; // Press Release Penalty [cite: 83, 91]
+            }
+
             return { total: Math.max(0, score), isImpact: impact };
         }
 
