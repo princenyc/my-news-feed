@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Signal: Black News Engine</title>
+    <title>The Signal: Black News Engine</title>
     <style>
         :root { --bg: #ffffff; --text: #1a1a1a; --accent: #666; --border: #000; --card: #f9f9f9; }
         [data-theme="dark"] { --bg: #121212; --text: #e0e0e0; --accent: #aaa; --border: #fff; --card: #1e1e1e; }
@@ -24,8 +24,6 @@
         .summary-box { display: none; background: var(--card); padding: 15px; margin-top: 10px; font-family: sans-serif; font-size: 0.9rem; border-left: 4px solid var(--text); }
         .score-tag { background: rgba(128,128,128,0.1); padding: 2px 8px; border-radius: 15px; font-size: 0.65rem; margin-left: 10px; color: var(--accent); }
         .impact-badge { color: #d44; font-weight: bold; border: 1px solid #d44; padding: 1px 4px; font-size: 0.6rem; margin-left: 5px; }
-        
-        /* Methodology Footer Styles */
         footer { margin-top: 80px; padding-top: 20px; border-top: 1px solid var(--accent); font-family: sans-serif; font-size: 0.8rem; color: var(--accent); }
         .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
         footer h4 { color: var(--text); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
@@ -41,48 +39,36 @@
     
     <div id="feed"></div>
 
-   <footer>
+    <footer>
         <div class="footer-grid">
             <div>
-                <h4>The Algorithm</h4>
-                <p>The Signal uses a weighted engine to prioritize "High-Signal" news. <b>Freshness Boosts</b> (+500) ensure breaking news stays at the top, while stories older than 48 hours receive a <b>Recency Penalty</b> (-400) to keep the feed current.</p>
+                <h4>How it Works</h4>
+                <p>The Signal uses a weighted engine to prioritize news. <b>Impact Boosts</b> (+300) are given to stories about policy and legislation. <b>Freshness Boosts</b> (+500) ensure breaking news stays at the top. <b>PR Penalties</b> (-150) bury generic releases.</p>
             </div>
             <div>
                 <h4>What is the "IMPACT" tag?</h4>
-                <p>The <span class="impact-badge">IMPACT</span> badge is automatically applied to stories that mention <b>structural levers of power</b>, such as legislation, court rulings, voting policy, or institutional accountability. These stories are given a <b>+300 point boost</b> to ensure systemic news isn't buried by culture or fluff.</p>
+                <p>The <span class="impact-badge">IMPACT</span> badge marks stories mentioning structural levers of power like legislation or court rulings. These get a <b>+300 point boost</b> to ensure they aren't buried.</p>
             </div>
         </div>
-        <div style="margin-top: 40px; border-top: 1px solid #eee; pt-20">
+        <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
              <h4>Our Active Sources</h4>
-             <ul id="source-list" style="columns: 3; -webkit-columns: 3; -moz-columns: 3;">
-                </ul>
+             <ul id="source-list" style="columns: 3; -webkit-columns: 3; -moz-columns: 3;"></ul>
         </div>
-        <p style="margin-top: 30px; opacity: 0.7;">&copy; 2026 The Signal. Developed for Mental Armor and Community Intelligence. A Prince Campbell/Chartreuse Explosive Experiment</p>
+        <p style="margin-top: 30px; opacity: 0.7;">&copy; 2026 The Signal. Built for community focus and transparency.</p>
     </footer>
 
     <script>
-       // THE LEVERS: Scoring Keywords
-        const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "education", "labor", "housing", "sentencing", "accountability", "reparations", "wealth gap", "civil rights", "innovation", "health equity", "environmental justice"];
+        const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "education", "labor", "housing", "sentencing", "accountability", "reparations", "wealth gap", "civil rights", "innovation", "health equity"];
         const CULTURE_WORDS = ["arts", "festival", "award", "celebrate", "legacy", "museum", "literature", "excellence"];
         const PR_PENALTY_WORDS = ["announces", "partnership", "fundraiser", "ribbon cutting", "grant awarded"];
 
         const SOURCES = [
             { name: "The AFRO", url: "https://afro.com/feed/", tier: 300 },
             { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300 },
-            { name: "Washington Informer", url: "https://www.washingtoninformer.com/feed/", tier: 220 },
-            { name: "Houston Defender", url: "https://defendernetwork.com/feed/", tier: 220 },
-            { name: "Atlanta Black Star", url: "https://atlantablackstar.com/feed/", tier: 250 },
-            { name: "AP US News", url: "https://news.google.com/rss/search?q=when:24h+allinurl:apnews.com+US+news", tier: 100 },
-{ name: "Reuters US", url: "https://news.google.com/rss/search?q=when:24h+allinurl:reuters.com+US+news", tier: 100 },
-{ name: "Bloomberg Markets", url: "https://news.google.com/rss/search?q=when:24h+allinurl:bloomberg.com+markets", tier: 100 },
-{ name: "AFP News", url: "https://news.google.com/rss/search?q=when:24h+allinurl:afp.com+news", tier: 100 },
-{ name: "UPI News", url: "https://news.google.com/rss/search?q=when:24h+allinurl:upi.com+news", tier: 100 }
-            { name: "News One", url: "https://newsone.com/feed/", tier: 220 },
             { name: "The Root", url: "https://theroot.com/rss", tier: 220 },
             { name: "The Grio", url: "https://thegrio.com/feed", tier: 220 },
             { name: "Dr. Stacey Patton", url: "https://drstaceypatton1865.substack.com/feed", tier: 250 },
             { name: "Don Lemon", url: "https://donlemon.substack.com/feed", tier: 300 },
-            { name: "Real Ones in the Room", url: "https://tyroneglover.substack.com/feed", tier: 220 },
             { name: "Joy-Ann Reid", url: "https://www.joyannreid.com/feed", tier: 300 },
             { name: "Roland Martin (YT)", url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCvXonL_6f6VatpLeS_vM19g", tier: 300 },
             { name: "African Diaspora News (YT)", url: "https://www.youtube.com/feeds/videos.xml?channel_id=UC6iGstVz-pInL5UunmS_XfA", tier: 300 },
@@ -90,7 +76,12 @@
             { name: "Court Accountability", url: "https://courtaccountability.substack.com/feed", tier: 220 },
             { name: "Legalytics", url: "https://legalytics.substack.com/feed", tier: 220 },
             { name: "Data4Democracy", url: "https://data4democracy.substack.com/feed", tier: 220 },
-            { name: "Robert Reich", url: "https://robertreich.substack.com/feed", tier: 200 }
+            { name: "Robert Reich", url: "https://robertreich.substack.com/feed", tier: 200 },
+            { name: "AP US News", url: "https://news.google.com/rss/search?q=when:24h+allinurl:apnews.com+US+news", tier: 100 },
+            { name: "Reuters US", url: "https://news.google.com/rss/search?q=when:24h+allinurl:reuters.com+US+news", tier: 100 },
+            { name: "Bloomberg Markets", url: "https://news.google.com/rss/search?q=when:24h+allinurl:bloomberg.com+markets", tier: 100 },
+            { name: "AFP News", url: "https://news.google.com/rss/search?q=when:24h+allinurl:afp.com+news", tier: 100 },
+            { name: "UPI News", url: "https://news.google.com/rss/search?q=when:24h+allinurl:upi.com+news", tier: 100 }
         ];
 
         function toggleTheme() {
@@ -102,7 +93,6 @@
         if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
 
         async function init() {
-            // Fill the footer source list automatically
             const listEl = document.getElementById('source-list');
             SOURCES.sort((a,b) => a.name.localeCompare(b.name)).forEach(s => {
                 const li = document.createElement('li');
@@ -118,11 +108,13 @@
                 try {
                     const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`);
                     const data = await res.json();
-                    data.items.forEach(item => {
-                        const content = (item.title + " " + item.description).toLowerCase();
-                        const scoreData = calculateScore(item, src.tier, content);
-                        allPosts.push({ ...item, sourceName: src.name, score: scoreData.total, isImpact: scoreData.isImpact });
-                    });
+                    if(data.items) {
+                        data.items.forEach(item => {
+                            const content = (item.title + " " + item.description).toLowerCase();
+                            const scoreData = calculateScore(item, src.tier, content);
+                            allPosts.push({ ...item, sourceName: src.name, score: scoreData.total, isImpact: scoreData.isImpact });
+                        });
+                    }
                 } catch (e) { console.error("Error with:", src.name); }
             }
 
@@ -165,32 +157,17 @@
             const box = document.getElementById(`sum-${id}`);
             box.style.display = box.style.display === 'block' ? 'none' : 'block';
         }
-function calculateScore(item, tier, content) {
-            let score = tier; // Base Authority Weight
+
+        function calculateScore(item, tier, content) {
+            let score = tier;
             let impact = false;
             const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
 
-            // LEVER: Culture Boost
-            if (CULTURE_WORDS.some(word => content.includes(word))) { 
-                score += 100; 
-            }
-
-            // LEVER: Recency Boost
+            if (CULTURE_WORDS.some(word => content.includes(word))) score += 100;
             if (hoursOld < 6) score += 500; 
-            
-            // LEVER: Old News Penalty
             if (hoursOld > 48) score -= 400; 
-
-            // LEVER: Impact Boost
-            if (IMPACT_WORDS.some(word => content.includes(word))) { 
-                score += 300; 
-                impact = true; 
-            }
-            
-            // LEVER: PR Penalty
-            if (tier <= 100 && PR_PENALTY_WORDS.some(word => content.includes(word))) {
-                score -= 150; 
-            }
+            if (IMPACT_WORDS.some(word => content.includes(word))) { score += 300; impact = true; }
+            if (tier <= 100 && PR_PENALTY_WORDS.some(word => content.includes(word))) score -= 150;
 
             return { total: Math.max(0, score), isImpact: impact };
         }
