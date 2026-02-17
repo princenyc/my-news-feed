@@ -131,8 +131,8 @@
             let impact = false;
 
             const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
-            if (hoursOld < 6) score += 250; // Recency Weight [cite: 57-58]
-
+            if (hoursOld < 6) score += 500; // Recency Weight [cite: 57-58]
+if (hoursOld > 48) score -= 400;
             if (IMPACT_WORDS.some(word => content.includes(word))) { 
                 score += 300; // Structural Impact Boost [cite: 64, 81]
                 impact = true; 
