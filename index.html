@@ -5,49 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Signal: Black News Engine</title>
     <style>
-        :root { --bg: #ffffff; --text: #1a1a1a; --accent: #666; --gold: #d4af37; --link: #000; }
-        body { font-family: 'Georgia', serif; max-width: 850px; margin: 0 auto; padding: 20px; background: var(--bg); color: var(--text); line-height: 1.5; }
+        :root { --bg: #ffffff; --text: #1a1a1a; --accent: #666; --border: #000; --card: #f9f9f9; }
+        [data-theme="dark"] { --bg: #121212; --text: #e0e0e0; --accent: #aaa; --border: #fff; --card: #1e1e1e; }
         
-        /* SLOWER TICKER */
+        body { font-family: 'Georgia', serif; max-width: 850px; margin: 0 auto; padding: 20px; background: var(--bg); color: var(--text); line-height: 1.5; transition: 0.3s; }
+        
+        .top-nav { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+        .theme-toggle { background: none; border: 1px solid var(--text); color: var(--text); padding: 5px 10px; cursor: pointer; font-family: sans-serif; font-size: 0.7rem; }
+
         .ticker-wrap { background: #000; color: #fff; padding: 10px; margin-bottom: 20px; overflow: hidden; white-space: nowrap; font-family: sans-serif; font-size: 0.8rem; text-transform: uppercase; }
         .ticker { display: inline-block; animation: marquee 60s linear infinite; padding-left: 100%; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        .header { border-bottom: 3px double #000; padding-bottom: 10px; margin-bottom: 30px; text-align: center; }
+        .header { border-bottom: 3px double var(--text); padding-bottom: 10px; margin-bottom: 30px; text-align: center; }
         h1 { font-size: 2.5rem; margin: 0; font-variant: small-caps; }
-        #searchBar { width: 100%; padding: 12px; margin-bottom: 30px; border: 1px solid #000; font-family: sans-serif; box-sizing: border-box; }
+        
+        #searchBar { width: 100%; padding: 12px; margin-bottom: 30px; border: 1px solid var(--text); background: var(--bg); color: var(--text); font-family: sans-serif; box-sizing: border-box; }
 
-        .article { margin-bottom: 40px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+        .article { margin-bottom: 40px; border-bottom: 1px solid var(--accent); padding-bottom: 20px; opacity: 0.95; }
         .meta { font-family: sans-serif; font-size: 0.7rem; color: var(--accent); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }
         .article h2 { font-size: 1.6rem; margin: 0 0 10px 0; line-height: 1.2; }
-        .article a { color: var(--link); text-decoration: none; }
+        .article a { color: var(--text); text-decoration: none; }
         
-        .sum-btn { background: none; border: 1px solid #000; padding: 5px 10px; font-family: sans-serif; font-size: 0.7rem; cursor: pointer; margin-top: 10px; }
-        .summary-box { display: none; background: #f9f9f9; padding: 15px; margin-top: 10px; font-family: sans-serif; font-size: 0.9rem; border-left: 4px solid #000; }
-        .score-tag { background: #f0f0f0; padding: 2px 8px; border-radius: 15px; font-size: 0.65rem; margin-left: 10px; color: #333; }
+        .sum-btn { background: none; border: 1px solid var(--text); color: var(--text); padding: 5px 10px; font-family: sans-serif; font-size: 0.7rem; cursor: pointer; margin-top: 10px; }
+        .summary-box { display: none; background: var(--card); padding: 15px; margin-top: 10px; font-family: sans-serif; font-size: 0.9rem; border-left: 4px solid var(--text); }
+        .score-tag { background: rgba(128,128,128,0.1); padding: 2px 8px; border-radius: 15px; font-size: 0.65rem; margin-left: 10px; color: var(--accent); }
         .impact-badge { color: #d44; font-weight: bold; border: 1px solid #d44; padding: 1px 4px; font-size: 0.6rem; margin-left: 5px; }
     </style>
 </head>
 <body>
+    <div class="top-nav"><button class="theme-toggle" onclick="toggleTheme()">🌓 Toggle Mode</button></div>
     <div class="ticker-wrap"><div class="ticker" id="ticker-content">Filtering the noise...</div></div>
     <div class="header"><h1>The Signal</h1><p><i>A Curated Newsfeed for the Black Community</i></p></div>
     <input type="text" id="searchBar" placeholder="Search the signal..." onkeyup="filterSearch()">
     <div id="feed"></div>
 
     <script>
+        const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "education", "labor", "housing"]; // [cite: 67-80]
         const MY_TOPICS = ["equity", "tech", "justice", "civil rights", "entrepreneur", "hbcu", "health"];
-        const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "education", "labor", "housing"]; 
-        const PR_PENALTY_WORDS = ["announces", "partnership", "fundraiser", "ribbon cutting"]; 
-
         const SOURCES = [
-            { name: "The AFRO", url: "https://afro.com/feed/", tier: 300 },
-            { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300 },
-            { name: "The Root", url: "https://theroot.com/rss", tier: 220 },
-            { name: "The Grio", url: "https://thegrio.com/feed", tier: 220 },
-            { name: "Bossip", url: "https://bossip.com/feed", tier: 150 },
+            { name: "The AFRO", url: "https://afro.com/feed/", tier: 300 }, // [cite: 10]
+            { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300 }, // [cite: 38]
+            { name: "The Root", url: "https://theroot.com/rss", tier: 220 }, // [cite: 6]
+            { name: "The Grio", url: "https://thegrio.com/feed", tier: 220 }, // [cite: 4]
+            { name: "Bossip", url: "https://bossip.com/feed", tier: 150 }, // [cite: 19]
             { name: "Reuters Wire", url: "https://news.google.com/rss/search?q=when:24h+allinurl:reuters.com", tier: 100 },
             { name: "AP News Wire", url: "https://news.google.com/rss/search?q=when:24h+allinurl:apnews.com", tier: 100 }
         ];
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const target = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', target);
+            localStorage.setItem('theme', target);
+        }
+
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
 
         async function init() {
             let allPosts = [];
@@ -64,11 +77,8 @@
                 } catch (e) { console.error(src.name); }
             }
 
-            // 1. DE-DUPLICATION LOGIC
             const uniquePosts = [];
             const seenHeadlines = new Set();
-            
-            // Sort by score first so we keep the best version of a repeated story
             allPosts.sort((a, b) => b.score - a.score);
 
             allPosts.forEach(post => {
@@ -79,9 +89,7 @@
                 }
             });
 
-            // 2. THE 15 STORY LIMIT
             const top15 = uniquePosts.slice(0, 15);
-
             document.getElementById('ticker-content').innerHTML = top15.slice(0, 8).map(p => ` • ${p.title}`).join(' ');
 
             const container = document.getElementById('feed');
@@ -107,9 +115,8 @@
             let score = tier;
             let impact = false;
             const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
-            if (hoursOld < 6) score += 250;
-            if (IMPACT_WORDS.some(word => content.includes(word))) { score += 300; impact = true; }
-            if (tier <= 100 && PR_PENALTY_WORDS.some(word => content.includes(word))) score -= 150;
+            if (hoursOld < 6) score += 250; // [cite: 57]
+            if (IMPACT_WORDS.some(word => content.includes(word))) { score += 300; impact = true; } // [cite: 64, 81]
             return { total: Math.max(0, score), isImpact: impact };
         }
 
