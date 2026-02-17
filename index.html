@@ -61,7 +61,9 @@
     </footer>
 
     <script>
-        const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "education", "labor", "housing", "sentencing", "accountability"];
+       // THE LEVERS: Scoring Keywords
+        const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "education", "labor", "housing", "sentencing", "accountability", "reparations", "wealth gap", "civil rights", "innovation", "health equity", "environmental justice"];
+        const CULTURE_WORDS = ["arts", "festival", "award", "celebrate", "legacy", "museum", "literature", "excellence"];
         const PR_PENALTY_WORDS = ["announces", "partnership", "fundraiser", "ribbon cutting", "grant awarded"];
 
         const SOURCES = [
@@ -153,25 +155,29 @@
             const box = document.getElementById(`sum-${id}`);
             box.style.display = box.style.display === 'block' ? 'none' : 'block';
         }
-
-        function calculateScore(item, tier, content) {
-            let score = tier; // Base Authority Weight [cite: 48, 51-54]
+function calculateScore(item, tier, content) {
+            let score = tier; // Base Authority Weight
             let impact = false;
             const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
 
-            // LEVER: Recency Boost [cite: 57]
+            // LEVER: Culture Boost
+            if (CULTURE_WORDS.some(word => content.includes(word))) { 
+                score += 100; 
+            }
+
+            // LEVER: Recency Boost
             if (hoursOld < 6) score += 500; 
             
-            // LEVER: Old News Penalty [cite: 61-62]
+            // LEVER: Old News Penalty
             if (hoursOld > 48) score -= 400; 
 
-            // LEVER: Impact Boost [cite: 64, 81]
+            // LEVER: Impact Boost
             if (IMPACT_WORDS.some(word => content.includes(word))) { 
                 score += 300; 
                 impact = true; 
             }
             
-            // LEVER: PR Penalty [cite: 83, 91]
+            // LEVER: PR Penalty
             if (tier <= 100 && PR_PENALTY_WORDS.some(word => content.includes(word))) {
                 score -= 150; 
             }
