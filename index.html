@@ -8,7 +8,6 @@
         :root { --bg: #ffffff; --text: #1a1a1a; --accent: #666; --gold: #d4af37; --link: #000; }
         body { font-family: 'Georgia', serif; max-width: 850px; margin: 0 auto; padding: 20px; background: var(--bg); color: var(--text); line-height: 1.5; }
         
-        /* News Ticker */
         .ticker-wrap { background: #000; color: #fff; padding: 10px; margin-bottom: 20px; overflow: hidden; white-space: nowrap; font-family: sans-serif; font-size: 0.8rem; text-transform: uppercase; }
         .ticker { display: inline-block; animation: marquee 30s linear infinite; }
         @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
@@ -22,16 +21,20 @@
         .article.hidden { display: none; }
         .meta { font-family: sans-serif; font-size: 0.7rem; color: var(--accent); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }
         .article h2 { font-size: 1.6rem; margin: 0 0 10px 0; line-height: 1.2; }
-        .article a { color: var(--link); text-decoration: none; border-bottom: 1px solid transparent; }
-        .article a:hover { border-bottom: 1px solid #000; }
+        .article a { color: var(--link); text-decoration: none; }
         
-        .score-tag { background: #f0f0f0; padding: 2px 8px; border-radius: 15px; font-size: 0.65rem; margin-left: 10px; vertical-align: middle; color: #333; }
+        /* Summary Button Style */
+        .sum-btn { background: none; border: 1px solid #000; padding: 5px 10px; font-family: sans-serif; font-size: 0.7rem; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .sum-btn:hover { background: #000; color: #fff; }
+        .summary-box { display: none; background: #f9f9f9; padding: 15px; margin-top: 10px; font-family: sans-serif; font-size: 0.9rem; border-left: 4px solid #000; }
+
+        .score-tag { background: #f0f0f0; padding: 2px 8px; border-radius: 15px; font-size: 0.65rem; margin-left: 10px; color: #333; }
         .impact-badge { color: #d44; font-weight: bold; border: 1px solid #d44; padding: 1px 4px; font-size: 0.6rem; margin-left: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="ticker-wrap"><div class="ticker" id="ticker-content">Loading high-authority headlines...</div></div>
+    <div class="ticker-wrap"><div class="ticker" id="ticker-content">Scanning high-authority sources...</div></div>
 
     <div class="header">
         <h1>The Signal</h1>
@@ -39,22 +42,20 @@
     </div>
 
     <input type="text" id="searchBar" placeholder="Search the signal..." onkeyup="filterSearch()">
-
     <div id="feed"></div>
 
     <script>
-        // CONFIGURATION
         const MY_TOPICS = ["equity", "tech", "justice", "civil rights", "entrepreneur", "hbcu", "health"];
-        const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "education", "labor", "housing"];
-        const PR_PENALTY_WORDS = ["announces", "partnership", "fundraiser", "ribbon cutting"];
+        const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "education", "labor", "housing"]; // [cite: 67-80]
+        const PR_PENALTY_WORDS = ["announces", "partnership", "fundraiser", "ribbon cutting"]; // [cite: 85-90]
 
         const SOURCES = [
-            { name: "The AFRO", url: "https://afro.com/feed/", tier: 300 }, // Legacy
+            { name: "The AFRO", url: "https://afro.com/feed/", tier: 300 }, // Tier 1 [cite: 51]
             { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300 },
-            { name: "The Root", url: "https://theroot.com/rss", tier: 220 }, // Commentary
+            { name: "The Root", url: "https://theroot.com/rss", tier: 220 }, // Tier 2 [cite: 52]
             { name: "The Grio", url: "https://thegrio.com/feed", tier: 220 },
-            { name: "Bossip", url: "https://bossip.com/feed", tier: 150 }, // Culture
-            { name: "Reuters Wire", url: "https://news.google.com/rss/search?q=when:24h+allinurl:reuters.com", tier: 100 }, // Global Wires
+            { name: "Bossip", url: "https://bossip.com/feed", tier: 150 }, // Tier 3 [cite: 53]
+            { name: "Reuters Wire", url: "https://news.google.com/rss/search?q=when:24h+allinurl:reuters.com", tier: 100 }, // Tier 4 [cite: 54]
             { name: "AP News Wire", url: "https://news.google.com/rss/search?q=when:24h+allinurl:apnews.com", tier: 100 }
         ];
 
@@ -69,8 +70,6 @@
                     
                     data.items.forEach(item => {
                         const content = (item.title + " " + item.description).toLowerCase();
-                        
-                        // Filtering logic for Big Wires
                         if (src.tier === 100 && !MY_TOPICS.some(t => content.includes(t))) return;
 
                         const scoreData = calculateScore(item, src.tier, content);
@@ -79,41 +78,45 @@
                 } catch (e) { console.error("Error with source:", src.name); }
             }
 
-            // Sort & Display
             allPosts.sort((a, b) => b.score - a.score);
-            
-            // Fill Ticker with Top 5
             tickerEl.innerHTML = allPosts.slice(0, 8).map(p => ` • ${p.title}`).join(' ');
 
             const container = document.getElementById('feed');
-            allPosts.forEach(post => {
+            allPosts.forEach((post, index) => {
                 const div = document.createElement('div');
                 div.className = 'article';
                 div.innerHTML = `
                     <div class="meta">${post.sourceName} • ${new Date(post.pubDate).toLocaleTimeString()} <span class="score-tag">Score: ${post.score}</span></div>
                     <h2><a href="${post.link}" target="_blank">${post.title}</a> ${post.isImpact ? '<span class="impact-badge">IMPACT</span>' : ''}</h2>
-                    <p>${post.description.replace(/<[^>]*>?/gm, '').substring(0, 180)}...</p>
+                    <button class="sum-btn" onclick="toggleSummary(${index})">Quick TL;DR</button>
+                    <div id="sum-${index}" class="summary-box">
+                        <strong>The Core Story:</strong><br>
+                        ${post.description.replace(/<[^>]*>?/gm, '').substring(0, 300)}...
+                    </div>
                 `;
                 container.appendChild(div);
             });
         }
 
+        function toggleSummary(id) {
+            const box = document.getElementById(`sum-${id}`);
+            box.style.display = box.style.display === 'block' ? 'none' : 'block';
+        }
+
         function calculateScore(item, tier, content) {
-            let score = tier;
+            let score = tier; // Base Authority [cite: 43, 48]
             let impact = false;
 
-            // Recency Boost
             const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
-            if (hoursOld < 6) score += 200;
+            if (hoursOld < 3) score += 250; // [cite: 57]
+            else if (hoursOld < 12) score += 150; // [cite: 59]
 
-            // Structural Impact Boost
             if (IMPACT_WORDS.some(word => content.includes(word))) {
-                score += 300;
+                score += 300; // Structural Boost [cite: 64, 81]
                 impact = true;
             }
 
-            // PR Penalty
-            if (tier === 100 && PR_PENALTY_WORDS.some(word => content.includes(word))) score -= 150;
+            if (tier <= 100 && PR_PENALTY_WORDS.some(word => content.includes(word))) score -= 150; // Penalty 
 
             return { total: Math.max(0, score), isImpact: impact };
         }
