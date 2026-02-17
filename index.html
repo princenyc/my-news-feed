@@ -3,85 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Black News Aggregator</title>
+    <title>Personalized News Engine</title>
     <style>
-        :root { --bg: #ffffff; --text: #1a1a1a; --accent: #5c5c5c; }
+        :root { --bg: #ffffff; --text: #1a1a1a; --accent: #5c5c5c; --boost: #0084ff; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 20px; background: var(--bg); color: var(--text); }
         h1 { font-size: 1.5rem; border-bottom: 2px solid #eee; padding-bottom: 10px; font-weight: 700; }
-        .feed-container { margin-top: 20px; }
-        .article { margin-bottom: 25px; border-bottom: 1px solid #f0f0f0; padding-bottom: 15px; }
-        .article h2 { font-size: 1.2rem; margin: 0 0 5px 0; color: #000; }
+        .article { margin-bottom: 30px; border-bottom: 1px solid #f0f0f0; padding-bottom: 20px; position: relative;}
+        .article h2 { font-size: 1.25rem; margin: 0 0 5px 0; color: #000; }
         .article a { text-decoration: none; color: inherit; }
         .article a:hover { text-decoration: underline; color: #0056b3; }
-        .meta { font-size: 0.85rem; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .meta { font-size: 0.8rem; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .score-badge { font-weight: bold; color: var(--boost); border: 1px solid var(--boost); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; float: right; }
         .description { font-size: 0.95rem; color: #444; }
         #loading { font-style: italic; color: #888; }
     </style>
 </head>
 <body>
 
-    <h1>News Aggregator</h1>
-    <div id="loading">Gathering the latest stories...</div>
-    <div id="feed" class="feed-container"></div>
+    <h1>Top Signal Feed</h1>
+    <div id="loading">Calculating Signal-to-Noise Ratio...</div>
+    <div id="feed"></div>
 
     <script>
-        // These are the links from your document!
-        const RSS_FEEDS = [
-            'https://thegrio.com/feed',
-            'https://theroot.com/rss',
-            'https://newsone.com/feed',
-            'https://afro.com/feed',
-            'https://www.blackenterprise.com/feed',
-            'https://eurweb.com/feed',
-            'https://bossip.com/feed',
-            'https://africanamericans.einnews.com/rss',
-            'https://amsterdamnews.com/feed/',
-            'https://atlantadailyworld.com/feed/',
-            'https://www.washingtoninformer.com/feed/',
-            'https://chicagodefender.com/feed/'
+        // 1. YOUR TIERED SOURCES
+        const FEEDS = [
+            { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300 }, // Tier 1
+            { name: "The AFRO", url: "https://afro.com/feed/", tier: 300 },
+            { name: "The Grio", url: "https://thegrio.com/feed", tier: 220 }, // Tier 2
+            { name: "The Root", url: "https://theroot.com/rss", tier: 220 },
+            { name: "Bossip", url: "https://bossip.com/feed", tier: 150 }, // Tier 3
+            { name: "Black PR Wire", url: "https://www.blackprwire.com/our-services/bprw-rss", tier: 80 } // Tier 4
         ];
 
-        // We use a helper service (rss2json) to read the feeds because of web security rules
-        async function fetchFeeds() {
+        // 2. YOUR KEYWORDS
+        const IMPACT_KEYWORDS = ["policy", "legislation", "federal", "court", "housing", "healthcare", "voting", "education", "labor", "banking", "tariffs", "policing"];
+        const PR_KEYWORDS = ["announces", "partnership", "event", "fundraiser", "grant awarded", "ribbon cutting"];
+
+        async function fetchAndRank() {
             const feedContainer = document.getElementById('feed');
-            const loadingNote = document.getElementById('loading');
-            
-            try {
-                const allArticles = [];
+            const allArticles = [];
 
-                for (const url of RSS_FEEDS) {
-                    const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
-                    const data = await response.json();
-                    if (data.items) {
-                        data.items.forEach(item => {
-                            item.sourceName = data.feed.title;
-                            allArticles.push(item);
-                        });
-                    }
-                }
-
-                // Sort by newest first
-                allArticles.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-
-                loadingNote.style.display = 'none';
-                
-                allArticles.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'article';
-                    div.innerHTML = `
-                        <div class="meta">${item.sourceName} • ${new Date(item.pubDate).toLocaleDateString()}</div>
-                        <h2><a href="${item.link}" target="_blank">${item.title}</a></h2>
-                        <div class="description">${item.description.replace(/<[^>]*>?/gm, '').substring(0, 180)}...</div>
-                    `;
-                    feedContainer.appendChild(div);
-                });
-            } catch (error) {
-                loadingNote.innerText = "Failed to load news. Please try again later.";
-                console.error(error);
+            for (const feed of FEEDS) {
+                try {
+                    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`);
+                    const data = await res.json();
+                    data.items.forEach(item => {
+                        item.sourceTier = feed.tier;
+                        item.sourceName = feed.name;
+                        item.finalScore = calculateScore(item);
+                        allArticles.push(item);
+                    });
+                } catch (e) { console.error("Error loading feed:", feed.name); }
             }
+
+            // Sort by Weighted Score
+            allArticles.sort((a, b) => b.finalScore - a.finalScore);
+
+            document.getElementById('loading').style.display = 'none';
+            allArticles.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'article';
+                div.innerHTML = `
+                    <span class="score-badge">Score: ${item.finalScore}</span>
+                    <div class="meta">${item.sourceName} • ${new Date(item.pubDate).toLocaleDateString()}</div>
+                    <h2><a href="${item.link}" target="_blank">${item.title}</a></h2>
+                    <div class="description">${item.description.replace(/<[^>]*>?/gm, '').substring(0, 160)}...</div>
+                `;
+                feedContainer.appendChild(div);
+            });
         }
 
-        fetchFeeds();
+        function calculateScore(item) {
+            let score = item.sourceTier; // Start with Authority
+            
+            // Recency Weight
+            const hoursOld = (new Date() - new Date(item.pubDate)) / (1000 * 60 * 60);
+            if (hoursOld < 3) score += 250;
+            else if (hoursOld < 12) score += 150;
+            else if (hoursOld < 24) score += 100;
+            else if (hoursOld < 48) score += 50;
+
+            // Structural Impact Boost
+            const text = (item.title + " " + item.description).toLowerCase();
+            if (IMPACT_KEYWORDS.some(word => text.includes(word))) score += 300;
+
+            // PR Penalty
+            if (item.sourceTier <= 80 && PR_KEYWORDS.some(word => text.includes(word))) score -= 150;
+
+            return Math.max(0, score);
+        }
+
+        fetchAndRank();
     </script>
 </body>
 </html>
