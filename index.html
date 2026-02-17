@@ -7,26 +7,19 @@
     <style>
         :root { --bg: #ffffff; --text: #1a1a1a; --accent: #666; --border: #000; --card: #f9f9f9; }
         [data-theme="dark"] { --bg: #121212; --text: #e0e0e0; --accent: #aaa; --border: #fff; --card: #1e1e1e; }
-        
         body { font-family: 'Georgia', serif; max-width: 850px; margin: 0 auto; padding: 20px; background: var(--bg); color: var(--text); line-height: 1.5; transition: 0.3s; }
-        
         .top-nav { display: flex; justify-content: flex-end; margin-bottom: 10px; }
         .theme-toggle { background: none; border: 1px solid var(--text); color: var(--text); padding: 5px 10px; cursor: pointer; font-family: sans-serif; font-size: 0.7rem; }
-
         .ticker-wrap { background: #000; color: #fff; padding: 10px; margin-bottom: 20px; overflow: hidden; white-space: nowrap; font-family: sans-serif; font-size: 0.8rem; text-transform: uppercase; }
         .ticker { display: inline-block; animation: marquee 60s linear infinite; padding-left: 100%; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
-
         .header { border-bottom: 3px double var(--text); padding-bottom: 10px; margin-bottom: 30px; text-align: center; }
         h1 { font-size: 2.5rem; margin: 0; font-variant: small-caps; }
-        
         #searchBar { width: 100%; padding: 12px; margin-bottom: 30px; border: 1px solid var(--text); background: var(--bg); color: var(--text); font-family: sans-serif; box-sizing: border-box; }
-
-        .article { margin-bottom: 40px; border-bottom: 1px solid var(--accent); padding-bottom: 20px; opacity: 0.95; }
+        .article { margin-bottom: 40px; border-bottom: 1px solid var(--accent); padding-bottom: 20px; }
         .meta { font-family: sans-serif; font-size: 0.7rem; color: var(--accent); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }
         .article h2 { font-size: 1.6rem; margin: 0 0 10px 0; line-height: 1.2; }
         .article a { color: var(--text); text-decoration: none; }
-        
         .sum-btn { background: none; border: 1px solid var(--text); color: var(--text); padding: 5px 10px; font-family: sans-serif; font-size: 0.7rem; cursor: pointer; margin-top: 10px; }
         .summary-box { display: none; background: var(--card); padding: 15px; margin-top: 10px; font-family: sans-serif; font-size: 0.9rem; border-left: 4px solid var(--text); }
         .score-tag { background: rgba(128,128,128,0.1); padding: 2px 8px; border-radius: 15px; font-size: 0.65rem; margin-left: 10px; color: var(--accent); }
@@ -35,22 +28,33 @@
 </head>
 <body>
     <div class="top-nav"><button class="theme-toggle" onclick="toggleTheme()">🌓 Toggle Mode</button></div>
-    <div class="ticker-wrap"><div class="ticker" id="ticker-content">Filtering the noise...</div></div>
+    <div class="ticker-wrap"><div class="ticker" id="ticker-content">Syncing global signal...</div></div>
     <div class="header"><h1>The Signal</h1><p><i>A Curated Newsfeed for the Black Community</i></p></div>
     <input type="text" id="searchBar" placeholder="Search the signal..." onkeyup="filterSearch()">
     <div id="feed"></div>
 
     <script>
-        const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "education", "labor", "housing"]; // [cite: 67-80]
-        const MY_TOPICS = ["equity", "tech", "justice", "civil rights", "entrepreneur", "hbcu", "health"];
+        const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "education", "labor", "housing", "sentencing", "accountability"];
         const SOURCES = [
-            { name: "The AFRO", url: "https://afro.com/feed/", tier: 300 }, // [cite: 10]
-            { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300 }, // [cite: 38]
-            { name: "The Root", url: "https://theroot.com/rss", tier: 220 }, // [cite: 6]
-            { name: "The Grio", url: "https://thegrio.com/feed", tier: 220 }, // [cite: 4]
-            { name: "Bossip", url: "https://bossip.com/feed", tier: 150 }, // [cite: 19]
-            { name: "Reuters Wire", url: "https://news.google.com/rss/search?q=when:24h+allinurl:reuters.com", tier: 100 },
-            { name: "AP News Wire", url: "https://news.google.com/rss/search?q=when:24h+allinurl:apnews.com", tier: 100 }
+            // Your Original Sources [cite: 4, 6, 8, 10, 15, 17, 19, 30, 32, 35, 38]
+            { name: "The AFRO", url: "https://afro.com/feed/", tier: 300 },
+            { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300 },
+            { name: "The Root", url: "https://theroot.com/rss", tier: 220 },
+            { name: "The Grio", url: "https://thegrio.com/feed", tier: 220 },
+            
+            // New Top Tier (Substack & YouTube) [cite: 111-118]
+            { name: "Dr. Stacey Patton", url: "https://drstaceypatton1865.substack.com/feed", tier: 300 },
+            { name: "Don Lemon", url: "https://donlemon.substack.com/feed", tier: 300 },
+            { name: "Joy-Ann Reid", url: "https://www.joyannreid.com/feed", tier: 300 },
+            { name: "Roland Martin (YT)", url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCvXonL_6f6VatpLeS_vM19g", tier: 300 },
+            { name: "African Diaspora News (YT)", url: "https://www.youtube.com/feeds/videos.xml?channel_id=UC6iGstVz-pInL5UunmS_XfA", tier: 300 },
+            
+            // New 2nd Tier [cite: 120-125]
+            { name: "Sentencing Project", url: "https://sentencing.substack.com/feed", tier: 220 },
+            { name: "Court Accountability", url: "https://courtaccountability.substack.com/feed", tier: 220 },
+            { name: "Legalytics", url: "https://legalytics.substack.com/feed", tier: 220 },
+            { name: "Data4Democracy", url: "https://data4democracy.substack.com/feed", tier: 220 },
+            { name: "Robert Reich", url: "https://robertreich.substack.com/feed", tier: 220 }
         ];
 
         function toggleTheme() {
@@ -59,7 +63,6 @@
             document.documentElement.setAttribute('data-theme', target);
             localStorage.setItem('theme', target);
         }
-
         if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
 
         async function init() {
@@ -70,11 +73,10 @@
                     const data = await res.json();
                     data.items.forEach(item => {
                         const content = (item.title + " " + item.description).toLowerCase();
-                        if (src.tier === 100 && !MY_TOPICS.some(t => content.includes(t))) return;
                         const scoreData = calculateScore(item, src.tier, content);
                         allPosts.push({ ...item, sourceName: src.name, score: scoreData.total, isImpact: scoreData.isImpact });
                     });
-                } catch (e) { console.error(src.name); }
+                } catch (e) { console.error("Error with:", src.name); }
             }
 
             const uniquePosts = [];
@@ -115,8 +117,8 @@
             let score = tier;
             let impact = false;
             const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
-            if (hoursOld < 6) score += 250; // [cite: 57]
-            if (IMPACT_WORDS.some(word => content.includes(word))) { score += 300; impact = true; } // [cite: 64, 81]
+            if (hoursOld < 6) score += 250;
+            if (IMPACT_WORDS.some(word => content.includes(word))) { score += 300; impact = true; }
             return { total: Math.max(0, score), isImpact: impact };
         }
 
