@@ -72,6 +72,21 @@
     </div>
 
     <script>
+        function updateSourceList() {
+    const listEl = document.getElementById('source-list');
+    if (!listEl) return;
+    listEl.innerHTML = ""; // Clear existing
+    
+    // Sort and display unique names
+    [...new Set(SOURCES.map(s => s.name))].sort().forEach(name => {
+        const li = document.createElement('li');
+        li.innerHTML = `• <span style="opacity: 0.8">${name}</span>`;
+        listEl.appendChild(li);
+    });
+}
+
+// Call it once when the page loads
+updateSourceList();
         const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "cory booker", "raphael warnock", "tim scott", "hakeem jeffries", "reparations", "civil rights"];
         const CULTURE_WORDS = ["arts", "festival", "award", "celebrate", "excellence"];
 
@@ -170,6 +185,25 @@
         }
 
         fetchFeeds();
+        <footer style="margin-top: 80px; padding: 40px 20px; border-top: 1px solid rgba(0,0,0,0.1); font-family: sans-serif; font-size: 0.85rem; color: #666; background: rgba(0,0,0,0.02);">
+        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
+            <div>
+                <h4 style="color: var(--text); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px;">The Engine Logic</h4>
+                <p>The Signal uses a weighted priority system. <b>Impact Boosts</b> (+300) identify policy levers. <b>Freshness Boosts</b> (+500) prioritize the last 12 hours. <b>Tiering</b> (100-300) balances authority vs. community signal.</p>
+            </div>
+            <div>
+                <h4 style="color: var(--text); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px;">What is <span class="impact-badge" style="margin: 0">IMPACT</span>?</h4>
+                <p>This badge marks stories containing keywords related to structural power (legislation, courts, voting, wealth gap). These stories are boosted to ensure they aren't buried by celebrity or "PR" news.</p>
+            </div>
+        </div>
+        
+        <div style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 30px;">
+             <h4 style="color: var(--text); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">Current Active Signal Sources</h4>
+             <ul id="source-list" style="columns: 2; -webkit-columns: 2; -moz-columns: 2; list-style: none; padding: 0; line-height: 1.8;"></ul>
+        </div>
+        
+        <p style="margin-top: 40px; opacity: 0.6; text-align: center;">&copy; 2026 The Signal. A Prince Campbell / Chartreuse Explosives experiment.</p>
+    </footer>
     </script>
 </body>
 </html>
