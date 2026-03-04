@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Signal: Black News Engine 2.0</title>
+    <title>The Signal: Black News Engine 2.1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Georgia&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg: #F0EEE9; /* Cloud Dancer neutral */
-            --text: #141414; /* Slate ink */
+            --bg: #F0EEE9; /* Cloud Dancer Neutral */
+            --text: #141414; 
             --accent: #d44; 
             --card: #ffffff; 
             --skeleton: #e0e0e0;
-            --border-radius: 20px; /* Modern 2026 rounding */
+            --border-radius: 20px;
         }
         [data-theme="dark"] { 
             --bg: #121212; 
@@ -20,116 +21,137 @@
             --skeleton: #2c2c2c;
         }
 
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; line-height: 1.4; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; line-height: 1.4; }
         .container { max-width: 1200px; margin: 0 auto; }
 
-        /* Header & Ticker */
+        /* Ticker */
         .ticker-wrap { background: #000; color: #fff; padding: 12px; border-radius: 12px; margin-bottom: 20px; overflow: hidden; font-size: 0.8rem; text-transform: uppercase; font-weight: bold; }
         .ticker { display: inline-block; animation: marquee 60s linear infinite; white-space: nowrap; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        /* Modern Tabs */
-        .tab-nav { display: flex; gap: 10px; margin-bottom: 30px; overflow-x: auto; padding-bottom: 10px; }
-        .tab-btn { background: var(--card); border: 1px solid transparent; color: var(--text); padding: 10px 24px; border-radius: 30px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s; white-space: nowrap; }
-        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); transform: scale(1.05); }
+        /* Navigation & Tabs */
+        .header { text-align: center; margin-bottom: 40px; }
+        h1 { font-family: 'Georgia', serif; font-variant: small-caps; font-size: 3rem; margin: 0; letter-spacing: -1px; }
+        
+        .tab-nav { display: flex; gap: 10px; margin-bottom: 30px; overflow-x: auto; padding-bottom: 10px; justify-content: center; }
+        .tab-btn { background: var(--card); border: 1px solid transparent; color: var(--text); padding: 12px 28px; border-radius: 30px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s; }
+        .tab-btn.active { background: var(--accent); color: white; transform: scale(1.05); }
+
+        /* Search Bar */
+        #searchBar { width: 100%; max-width: 600px; display: block; margin: 0 auto 40px auto; padding: 15px 25px; border-radius: 30px; border: 1px solid rgba(0,0,0,0.1); background: var(--card); color: var(--text); font-size: 1rem; outline: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
 
         /* Bento Grid */
-        #feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        #feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
         
-        .article { background: var(--card); border-radius: var(--border-radius); padding: 24px; position: relative; display: flex; flex-direction: column; transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
-        .article:hover { transform: translateY(-8px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
-        .article.high-impact { grid-column: span 2; } /* Bento hierarchy */
+        .article { background: var(--card); border-radius: var(--border-radius); padding: 30px; position: relative; display: flex; flex-direction: column; transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); }
+        .article:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); border-color: var(--accent); }
+        .article.high-impact { grid-column: span 2; border-left: 5px solid var(--accent); }
         
-        .meta { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; font-weight: 800; }
-        .article h2 { font-size: 1.4rem; margin: 0 0 15px 0; line-height: 1.25; font-weight: 700; color: var(--text); }
+        .meta { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .article h2 { font-family: 'Georgia', serif; font-size: 1.6rem; margin: 0 0 15px 0; line-height: 1.2; }
         .article a { color: inherit; text-decoration: none; }
+        .article p { font-size: 0.95rem; color: #555; line-height: 1.5; margin-bottom: 20px; }
         
-        .impact-badge { background: var(--accent); color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.6rem; vertical-align: middle; margin-left: 8px; }
+        .impact-badge { background: var(--accent); color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; font-family: sans-serif; }
 
-        /* Shimmer Skeleton */
-        .skeleton { background: linear-gradient(90deg, var(--skeleton) 25%, #f1f3f7 50%, var(--skeleton) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 12px; }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .sk-box { height: 250px; width: 100%; }
+        /* Footer Style */
+        footer { margin-top: 80px; padding: 60px 20px; border-top: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.02); }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto; }
+        footer h4 { text-transform: uppercase; letter-spacing: 2px; font-size: 0.9rem; margin-bottom: 20px; }
+        #source-list { columns: 3; list-style: none; padding: 0; font-size: 0.8rem; line-height: 2; opacity: 0.8; }
 
-        @media (max-width: 768px) { .article.high-impact { grid-column: span 1; } }
+        @media (max-width: 768px) { .article.high-impact { grid-column: span 1; } #source-list { columns: 1; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="ticker-wrap"><div class="ticker" id="ticker-content">Initializing Secure Signal...</div></div>
+        <div class="ticker-wrap"><div class="ticker" id="ticker-content">Syncing Global Signal...</div></div>
         
-        <h1 style="font-variant: small-caps; font-size: 2.8rem; margin-bottom: 10px;">The Signal</h1>
-        
+        <div class="header">
+            <h1>The Signal</h1>
+            <p><i>Intelligence for the Black Community</i></p>
+        </div>
+
+        <input type="text" id="searchBar" placeholder="Search the signal..." onkeyup="renderFeed()">
+
         <div class="tab-nav">
-            <button class="tab-btn active" onclick="switchCategory('news', this)">Top Signal</button>
+            <button class="tab-btn active" onclick="switchCategory('news', this)">Top News</button>
             <button class="tab-btn" onclick="switchCategory('sports', this)">Sports</button>
             <button class="tab-btn" onclick="switchCategory('entertainment', this)">Entertainment</button>
         </div>
 
-        <div id="feed">
-            <div class="skeleton sk-box"></div><div class="skeleton sk-box"></div><div class="skeleton sk-box"></div>
-        </div>
+        <div id="feed"></div>
     </div>
 
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <h4>The Engine Logic</h4>
+                <p>Prioritizing structural signal over noise. <b>Impact Boosts</b> (+300) track policy and legislation. <b>Tiering</b> balances mainstream wires (100) against community primary sources (300).</p>
+            </div>
+            <div>
+                <h4>What is <span class="impact-badge" style="background:#000">IMPACT</span>?</h4>
+                <p>Identifies stories affecting systemic levers: housing, voting rights, wealth gap, and court rulings. These are weighted to stay at the top of your feed.</p>
+            </div>
+        </div>
+        <div style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 30px;">
+             <h4>Active Signal Sources</h4>
+             <ul id="source-list"></ul>
+        </div>
+        <p style="text-align: center; margin-top: 40px; font-size: 0.7rem;">&copy; 2026 THE SIGNAL. Built for community focus and transparency.</p>
+    </footer>
+
     <script>
-        function updateSourceList() {
-    const listEl = document.getElementById('source-list');
-    if (!listEl) return;
-    listEl.innerHTML = ""; // Clear existing
-    
-    // Sort and display unique names
-    [...new Set(SOURCES.map(s => s.name))].sort().forEach(name => {
-        const li = document.createElement('li');
-        li.innerHTML = `• <span style="opacity: 0.8">${name}</span>`;
-        listEl.appendChild(li);
-    });
-}
+        const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "cory booker", "raphael warnock", "tim scott", "hakeem jeffries", "reparations", "wealth gap", "civil rights", "innovation", "homeownership"];
+        const CULTURE_WORDS = ["arts", "festival", "award", "celebrate", "excellence", "film", "music"];
 
-// Call it once when the page loads
-updateSourceList();
-        const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "cory booker", "raphael warnock", "tim scott", "hakeem jeffries", "reparations", "civil rights"];
-        const CULTURE_WORDS = ["arts", "festival", "award", "celebrate", "excellence"];
+        const SOURCES = [
+            // NEWS
+            { name: "The AFRO", url: "https://afro.com/feed/", tier: 300, category: "news" },
+            { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300, category: "news" },
+            { name: "Black Enterprise", url: "https://www.blackenterprise.com/feed/", tier: 300, category: "news" },
+            { name: "The Root", url: "https://theroot.com/rss", tier: 200, category: "news" },
+            { name: "Errol Louis (BSky)", url: "https://bsky.rss.average.name/profile/errollouis.bsky.social/rss", tier: 300, category: "news" },
+            { name: "Phil Lewis (BSky)", url: "https://bsky.rss.average.name/profile/phillewis.bsky.social/rss", tier: 250, category: "news" },
+            { name: "The Plug (Tech)", url: "https://tpinsights.com/feed", tier: 250, category: "news" },
+            { name: "POCIT", url: "https://peopleofcolorintech.com/feed/", tier: 250, category: "news" },
+            { name: "NPR News", url: "https://news.google.com/rss/search?q=when:24h+allinurl:npr.org+news", tier: 100, category: "news" },
+            
+            // SPORTS
+            { name: "Andscape", url: "https://andscape.com/feed", tier: 300, category: "sports" },
+            { name: "The Shadow League", url: "https://theshadowleague.com/feed", tier: 300, category: "sports" },
+            { name: "HBCU Gameday", url: "https://hbcugameday.com/feed", tier: 250, category: "sports" },
+            { name: "Jemele Hill (X)", url: "https://rss.app/feeds/_g8vWpXzQ9P5JmQz0.xml", tier: 250, category: "sports" },
 
-        // Categorized Sources
-       const SOURCES = [
-    // --- TOP SIGNAL (NEWS) ---
-    { name: "The AFRO", url: "https://afro.com/feed/", tier: 300, category: "news" },
-    { name: "Black Enterprise", url: "https://www.blackenterprise.com/feed/", tier: 300, category: "news" },
-    { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300, category: "news" },
-    { name: "The Root", url: "https://theroot.com/rss", tier: 200, category: "news" }, // Moved here
-    { name: "NewsOne", url: "https://newsone.com/feed/", tier: 250, category: "news" },
-    { name: "The Plug (Tech)", url: "https://tpinsights.com/feed", tier: 250, category: "news" },
-    { name: "UrbanGeekz", url: "https://urbangeekz.com/feed/", tier: 250, category: "news" },
-    { name: "POCIT", url: "https://peopleofcolorintech.com/feed/", tier: 250, category: "news" },
-    { name: "Black Real Estate News", url: "https://news.google.com/rss/search?q=when:48h+Black+real+estate+homeownership+investment", tier: 250, category: "news" },
-    { name: "Black Business.org", url: "http://feeds.feedburner.com/blackbusinessorg", tier: 250, category: "news" },       
-    { name: "Errol Louis (BSky)", url: "https://bsky.rss.average.name/profile/errollouis.bsky.social/rss", tier: 300, category: "news" },
-    { name: "Phil Lewis (BSky)", url: "https://bsky.rss.average.name/profile/phillewis.bsky.social/rss", tier: 250, category: "news" },
-
-    // --- ENTERTAINMENT & CULTURE ---
-    { name: "Essence", url: "https://www.essence.com/feed/", tier: 220, category: "entertainment" },
-    { name: "Vibe", url: "https://www.vibe.com/feed/", tier: 220, category: "entertainment" },
-    { name: "theJasmineBrand", url: "https://thejasminebrand.com/feed/", tier: 220, category: "entertainment" },
-    { name: "Bossip", url: "https://bossip.com/feed/", tier: 230, category: "entertainment" },
-    { name: "EURweb", url: "https://eurweb.com/feed", tier: 200, category: "entertainment" },
-    { name: "Okayplayer", url: "https://www.okayplayer.com/feed", tier: 220, category: "entertainment" },
-    { name: "Shadow and Act", url: "https://shadowandact.com/feed", tier: 220, category: "entertainment" },
-
-    // --- SPORTS ---
-    { name: "Andscape", url: "https://andscape.com/feed", tier: 300, category: "sports" },
-    { name: "The Shadow League", url: "https://theshadowleague.com/feed", tier: 300, category: "sports" },
-    { name: "HBCU Gameday", url: "https://hbcugameday.com/feed", tier: 250, category: "sports" },
-    { name: "HBCU Sports", url: "https://hbcusports.com/feed", tier: 250, category: "sports" },
-    { name: "Jemele Hill (X)", url: "https://rss.app/feeds/_g8vWpXzQ9P5JmQz0.xml", tier: 250, category: "sports" }
-];
-    
+            // ENTERTAINMENT
+            { name: "Essence", url: "https://www.essence.com/feed/", tier: 220, category: "entertainment" },
+            { name: "theJasmineBrand", url: "https://thejasminebrand.com/feed/", tier: 220, category: "entertainment" },
+            { name: "Bossip", url: "https://bossip.com/feed/", tier: 250, category: "entertainment" },
+            { name: "Shadow and Act", url: "https://shadowandact.com/feed", tier: 220, category: "entertainment" },
+            { name: "The Shade Room", url: "https://theshaderoom.com/feed/", tier: 220, category: "entertainment" }
+        ];
 
         let currentCategory = 'news';
         let allArticles = [];
 
+        async function init() {
+            // Build footer source list
+            const listEl = document.getElementById('source-list');
+            [...new Set(SOURCES.map(s => s.name))].sort().forEach(name => {
+                const li = document.createElement('li');
+                li.innerText = `• ${name}`;
+                listEl.appendChild(li);
+            });
+
+            await fetchFeeds();
+        }
+
         async function fetchFeeds() {
+            const container = document.getElementById('feed');
+            container.innerHTML = "<div style='grid-column: 1/-1; text-align: center;'>Decoding Signal...</div>";
+            
             allArticles = [];
-            for (const src of SOURCES) {
+            const fetchPromises = SOURCES.map(async (src) => {
                 try {
                     const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`);
                     const data = await res.json();
@@ -141,7 +163,9 @@ updateSourceList();
                         });
                     }
                 } catch (e) { console.error(src.name + " failed"); }
-            }
+            });
+
+            await Promise.all(fetchPromises);
             renderFeed();
         }
 
@@ -163,47 +187,32 @@ updateSourceList();
 
         function renderFeed() {
             const container = document.getElementById('feed');
+            const searchVal = document.getElementById('searchBar').value.toLowerCase();
             container.innerHTML = "";
             
             const filtered = allArticles
                 .filter(a => a.category === currentCategory)
+                .filter(a => a.title.toLowerCase().includes(searchVal) || a.source.toLowerCase().includes(searchVal))
                 .sort((a,b) => b.score - a.score)
-                .slice(0, 15);
+                .slice(0, 20);
 
             filtered.forEach(post => {
+                const isImpact = post.score > 800;
                 const div = document.createElement('div');
-                div.className = `article ${post.score > 800 ? 'high-impact' : ''}`;
+                div.className = `article ${isImpact ? 'high-impact' : ''}`;
                 div.innerHTML = `
-                    <div class="meta">${post.source} • ${post.score} Points</div>
-                    <h2><a href="${post.link}" target="_blank">${post.title}</a> ${post.score > 800 ? '<span class="impact-badge">IMPACT</span>' : ''}</h2>
-                    <p style="font-size: 0.9rem; color: #666; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">${post.description.replace(/<[^>]*>?/gm, '')}</p>
+                    <div class="meta"><span>${post.source}</span> ${isImpact ? '<span class="impact-badge">IMPACT</span>' : ''}</div>
+                    <h2><a href="${post.link}" target="_blank">${post.title}</a></h2>
+                    <p>${post.description.replace(/<[^>]*>?/gm, '').substring(0, 180)}...</p>
+                    <div style="font-size: 0.7rem; opacity: 0.6; margin-top: auto;">${new Date(post.pubDate).toLocaleDateString()} • Score: ${post.score}</div>
                 `;
                 container.appendChild(div);
             });
 
-            document.getElementById('ticker-content').innerHTML = filtered.slice(0, 5).map(p => ` • ${p.title}`).join(' ');
+            document.getElementById('ticker-content').innerHTML = filtered.slice(0, 8).map(p => ` • ${p.title}`).join(' ');
         }
 
-        fetchFeeds();
-        <footer style="margin-top: 80px; padding: 40px 20px; border-top: 1px solid rgba(0,0,0,0.1); font-family: sans-serif; font-size: 0.85rem; color: #666; background: rgba(0,0,0,0.02);">
-        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
-            <div>
-                <h4 style="color: var(--text); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px;">The Engine Logic</h4>
-                <p>The Signal uses a weighted priority system. <b>Impact Boosts</b> (+300) identify policy levers. <b>Freshness Boosts</b> (+500) prioritize the last 12 hours. <b>Tiering</b> (100-300) balances authority vs. community signal.</p>
-            </div>
-            <div>
-                <h4 style="color: var(--text); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px;">What is <span class="impact-badge" style="margin: 0">IMPACT</span>?</h4>
-                <p>This badge marks stories containing keywords related to structural power (legislation, courts, voting, wealth gap). These stories are boosted to ensure they aren't buried by celebrity or "PR" news.</p>
-            </div>
-        </div>
-        
-        <div style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 30px;">
-             <h4 style="color: var(--text); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">Current Active Signal Sources</h4>
-             <ul id="source-list" style="columns: 2; -webkit-columns: 2; -moz-columns: 2; list-style: none; padding: 0; line-height: 1.8;"></ul>
-        </div>
-        
-        <p style="margin-top: 40px; opacity: 0.6; text-align: center;">&copy; 2026 The Signal. A Prince Campbell / Chartreuse Explosives experiment.</p>
-    </footer>
+        init();
     </script>
 </body>
 </html>
