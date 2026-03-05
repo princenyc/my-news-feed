@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Signal: Performance Edition 3.0</title>
+    <title>The Signal: Master Edition 3.1</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Georgia&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #F0EEE9; --text: #141414; --accent: #d44; --card: #ffffff; --border-radius: 20px; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.4; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.4; transition: 0.3s; }
         .container { max-width: 1200px; margin: 0 auto; }
         .ticker-wrap { background: #000; color: #fff; padding: 12px; border-radius: 12px; margin-bottom: 20px; overflow: hidden; font-size: 0.8rem; text-transform: uppercase; font-weight: bold; min-height: 40px; display: flex; align-items: center; }
         .ticker { display: inline-block; animation: marquee 60s linear infinite; white-space: nowrap; }
@@ -19,16 +19,16 @@
         .tab-btn.active { background: var(--accent); color: white; transform: scale(1.05); }
         #searchBar { width: 100%; max-width: 600px; display: block; margin: 0 auto 40px auto; padding: 15px 25px; border-radius: 30px; border: 1px solid rgba(0,0,0,0.1); background: var(--card); color: var(--text); font-size: 1rem; outline: none; }
         #feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
-        .article { background: var(--card); border-radius: var(--border-radius); padding: 30px; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); transition: 0.3s; }
+        .article { background: var(--card); border-radius: var(--border-radius); padding: 30px; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); transition: 0.3s; position: relative; }
         .article:hover { transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
         .article.high-impact { grid-column: span 2; border-left: 5px solid var(--accent); }
         .meta { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .article h2 { font-family: 'Georgia', serif; font-size: 1.65rem; margin: 0 0 15px 0; line-height: 1.2; font-weight: 700; }
         .article a { color: inherit; text-decoration: none; }
-        .article a:hover { color: var(--accent); text-decoration: underline; }
+        .article a:hover { color: var(--accent); }
         .impact-badge { background: var(--accent); color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; }
         footer { margin-top: 80px; padding: 60px 20px; border-top: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.02); }
-        #debug-panel { margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.05); border-radius: 10px; font-family: monospace; font-size: 0.75rem; }
+        #debug-panel { margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.05); border-radius: 10px; font-family: monospace; font-size: 0.75rem; border: 1px solid rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -44,7 +44,7 @@
         <div id="feed"></div>
     </div>
     <footer>
-        <div id="debug-panel"><b>Speed Diagnostics:</b> <span id="debug-text">Optimizing load...</span></div>
+        <div id="debug-panel"><b>Diagnostics:</b> <span id="debug-text">Initializing master engine...</span></div>
         <div style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 30px; max-width: 1200px; margin: 0 auto;">
              <h4>Active Signal Sources</h4>
              <ul id="source-list" style="columns: 2; font-size: 0.8rem; opacity: 0.7; list-style: none; padding: 0;"></ul>
@@ -53,56 +53,60 @@
 
 <script>
     const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "reparations", "wealth gap", "civil rights", "innovation", "homeownership"];
+    
     const SOURCES = [
-        // === NEWS: CELEBRITY JOURNALIST SIGNAL ===
+        // === NEWS: CELEBRITY JOURNALIST SIGNAL (Tier 300) ===
         { name: "Kareem Abdul-Jabbar", url: "https://kareem.substack.com/feed", tier: 300, category: "news" },
         { name: "Ta-Nehisi Coates", url: "https://ta-nehisicoates.substack.com/feed", tier: 300, category: "news" },
         { name: "Don Lemon", url: "https://donlemon.substack.com/feed", tier: 300, category: "news" },
         { name: "W. Kamau Bell", url: "https://wkamau.substack.com/feed", tier: 250, category: "news" },
+        { name: "The Intersection (T. Johnson)", url: "https://theintersection.substack.com/feed", tier: 250, category: "news" },
 
-        // === SUBSTACK & NEWSLETTER SIGNAL (Tier 250-300) ===
-        { name: "The Present Age", url: "https://www.readpresentage.com/feed", tier: 250, category: "news" },
-        { name: "Heated", url: "https://heated.world/feed", tier: 250, category: "news" },
-        { name: "Steady (Dan Rather)", url: "https://steady.substack.com/feed", tier: 200, category: "news" },
-        { name: "The Margin", url: "https://themargin.substack.com/feed", tier: 250, category: "news" },
+        // === NEWS: INVESTIGATIVE & TECH ===
+        { name: "The Plug (Tech)", url: "https://tpinsights.com/feed", tier: 250, category: "news" },
         { name: "Sherrell Dorsey", url: "https://sherrelldorsey.substack.com/feed", tier: 250, category: "news" },
-        { name: "Advancing Justice", url: "https://advancingjustice.substack.com/feed", tier: 250, category: "news" }
+        { name: "NYT: Race & Ethnicity", url: "https://www.nytimes.com/svc/collections/v1/publish/https://www.nytimes.com/topic/subject/race-and-ethnicity/rss.xml", tier: 300, category: "news" },
+        { name: "Politico Picks", url: "https://www.politico.com/rss/politicopicks.xml", tier: 250, category: "news" },
 
-        // === NEWS: GENERAL & INVESTIGATIVE ===
+        // === NEWS: GENERAL ===
         { name: "Black Enterprise", url: "https://www.blackenterprise.com/feed/", tier: 300, category: "news" },
         { name: "The AFRO", url: "https://afro.com/feed/", tier: 300, category: "news" },
         { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300, category: "news" },
         { name: "The Root", url: "https://theroot.com/rss", tier: 250, category: "news" },
-        { name: "Politico Picks", url: "https://www.politico.com/rss/politicopicks.xml", tier: 250, category: "news" },
-        { name: "NYT: Race & Ethnicity", url: "https://www.nytimes.com/svc/collections/v1/publish/https://www.nytimes.com/topic/subject/race-and-ethnicity/rss.xml", tier: 300, category: "news" },
 
         // === SPORTS SIGNAL ===
         { name: "Andscape", url: "https://andscape.com/feed", tier: 300, category: "sports" },
         { name: "The Shadow League", url: "https://theshadowleague.com/feed", tier: 300, category: "sports" },
         { name: "HBCU Gameday", url: "https://hbcugameday.com/feed", tier: 250, category: "sports" },
-        { name: "Total Pro Sports", url: "https://www.totalprosports.com/feed/", tier: 250, category: "sports" },
+        { name: "Total Pro Sports", url: "https://www.totalprosports.com/feed/", tier: 220, category: "sports" },
 
-       // === ENTERTAINMENT SECTION ===
-        { name: "Variety", url: "https://variety.com/feed/", tier: 200, category: "entertainment" },
-        { name: "The Hollywood Reporter", url: "https://hollywoodreporter.com/feed", tier: 200, category: "entertainment" },
-        { name: "Billboard", url: "https://billboard.com/feed", tier: 200, category: "entertainment" },
-        { name: "Shadow and Act", url: "http://cms.shadowandact.com/feed/", tier: 250, category: "entertainment" },
-        { name: "Black PR Wire (Arts)", url: "https://www.blackprwire.com/our-services/bprw-rss?catid=1", tier: 220, category: "entertainment" },
-        { name: "Atlanta Black Star (Ent)", url: "https://atlantablackstar.com/category/entertainment/feed", tier: 250, category: "entertainment" },
-        { name: "Urban Belle", url: "https://urbanbellemag.com/feed", tier: 200, category: "entertainment" },
-        { name: "Essence", url: "https://www.essence.com/feed/", tier: 220, category: "entertainment" },
-        { name: "theJasmineBrand", url: "https://thejasminebrand.com/feed/", tier: 250, category: "entertainment" },
-        { name: "Bossip", url: "https://bossip.com/feed/", tier: 250, category: "entertainment" },
-        { name: "The Shade Room", url: "https://theshaderoom.com/feed/", tier: 250, category: "entertainment" }
+        // === ENTERTAINMENT & CULTURE ===
+        { name: "Variety", url: "https://variety.com/feed/", tier: 280, category: "entertainment" },
+        { name: "The Hollywood Reporter", url: "https://hollywoodreporter.com/feed", tier: 280, category: "entertainment" },
+        { name: "Shadow and Act", url: "https://shadowandact.com/feed", tier: 250, category: "entertainment" },
+        { name: "Essence", url: "https://www.essence.com/feed/", tier: 250, category: "entertainment" },
+        { name: "theJasmineBrand", url: "https://thejasminebrand.com/feed/", tier: 220, category: "entertainment" },
+        { name: "The Shade Room", url: "https://theshaderoom.com/feed/", tier: 220, category: "entertainment" }
     ];
 
     let currentCategory = 'news';
     let allArticles = [];
-    let fetchedCategories = new Set();
+    let syncedCount = 0;
+
+    function getRelativeTime(pubDate) {
+        if (!pubDate) return "";
+        const diff = new Date() - new Date(pubDate);
+        const mins = Math.floor(diff / 60000);
+        const hrs = Math.floor(mins / 60);
+        if (mins < 60) return `${mins}m ago`;
+        if (hrs < 24) return `${hrs}h ago`;
+        return new Date(pubDate).toLocaleDateString();
+    }
 
     function calculateReadTime(text) {
         const words = (text || "").replace(/<[^>]*>?/gm, '').split(/\s+/).length;
-        return `${Math.ceil(words / 200)}m read`;
+        const mins = Math.ceil(words / 200);
+        return mins <= 1 ? '1m read' : `${mins}m read`;
     }
 
     function calculateScore(item, tier, content) {
@@ -111,6 +115,7 @@
         if (hoursOld < 12) score += 500;
         score -= (hoursOld * 5); 
         if (IMPACT_WORDS.some(word => content.includes(word))) score += 300;
+        if (hoursOld > 48) score -= 500; // Penalize but don't kill
         return Math.floor(score);
     }
 
@@ -120,20 +125,21 @@
         
         const fetchPromises = targets.map(async (src) => {
             try {
-                const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`);
+                const proxy = "https://api.rss2json.com/v1/api.json?rss_url=";
+                const res = await fetch(proxy + encodeURIComponent(src.url));
                 const data = await res.json();
                 if(data.status === "ok") {
+                    syncedCount++;
                     data.items.forEach(item => {
                         const content = ((item.title || "") + " " + (item.description || "")).toLowerCase();
                         allArticles.push({ ...item, source: src.name, score: calculateScore(item, src.tier, content), category: src.category });
                     });
                 }
-            } catch (e) { console.warn(src.name + " failed"); }
+            } catch (e) { console.warn(src.name + " skip"); }
         });
 
         await Promise.allSettled(fetchPromises);
-        fetchedCategories.add(cat);
-        debug.innerText = `Synced: ${[...fetchedCategories].join(', ')}. Total Articles: ${allArticles.length}`;
+        debug.innerText = `Synced ${syncedCount} of ${SOURCES.length} sources. Total articles: ${allArticles.length}`;
         renderFeed();
     }
 
@@ -143,9 +149,8 @@
             const li = document.createElement('li'); li.innerText = `• ${name}`; listEl.appendChild(li);
         });
         
-        // Priority 1: News
-        await fetchFeeds('news');
-        // Background: Others
+        // Parallel loading for speed and stability
+        fetchFeeds('news');
         fetchFeeds('sports');
         fetchFeeds('entertainment');
     }
@@ -160,26 +165,31 @@
     function renderFeed() {
         const container = document.getElementById('feed');
         const searchVal = document.getElementById('searchBar').value.toLowerCase();
+        container.innerHTML = "";
         const sourceCounts = {}; 
-        
+
         const filtered = allArticles
             .filter(a => a.category === currentCategory)
             .filter(a => (a.title || "").toLowerCase().includes(searchVal))
             .sort((a,b) => b.score - a.score)
             .filter(a => {
                 sourceCounts[a.source] = (sourceCounts[a.source] || 0) + 1;
-                return sourceCounts[a.source] <= 2; 
+                return sourceCounts[a.source] <= 2; // Flood control
             })
             .slice(0, 20);
 
-        container.innerHTML = filtered.length ? "" : `<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>No signal in ${currentCategory} yet...</div>`;
+        if (filtered.length === 0) {
+            container.innerHTML = `<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>Decoding signal...</div>`;
+            return;
+        }
 
         filtered.forEach(post => {
             const isImpact = post.score > 600;
+            const readTime = calculateReadTime(post.description);
             const div = document.createElement('div');
             div.className = `article ${isImpact ? 'high-impact' : ''}`;
             div.innerHTML = `
-                <div class="meta"><span>${post.source} • ${calculateReadTime(post.description)}</span></div>
+                <div class="meta"><span>${post.source} • ${readTime}</span><span>${getRelativeTime(post.pubDate)}</span></div>
                 <h2><a href="${post.link}" target="_blank">${post.title || 'Untitled'}</a></h2>
                 <p>${(post.description || "").replace(/<[^>]*>?/gm, '').substring(0, 150)}...</p>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
