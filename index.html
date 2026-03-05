@@ -52,44 +52,31 @@
     </footer>
 
 <script>
-    const IMPACT_WORDS = ["supreme court", "policy","VC funding", "capital", "generational wealth", "investment", "reform", "justice", "executive order", "advocacy", "equity", "labor", "leadership", "legislation", "federal", "supreme court", "voting", "reparations", "wealth gap", "civil rights", "innovation", "homeownership"];
+    const IMPACT_WORDS = ["supreme court", "policy","VC funding", "capital", "generational wealth", "investment", "reform", "justice", "executive order", "advocacy", "equity", "labor", "leadership", "legislation", "federal", "voting", "reparations", "wealth gap", "civil rights", "innovation", "homeownership"];
     
     const SOURCES = [
-        // === NEWS: CELEBRITY JOURNALIST SIGNAL (Tier 300) ===
         { name: "Kareem Abdul-Jabbar", url: "https://kareem.substack.com/feed", tier: 300, category: "news" },
         { name: "Ta-Nehisi Coates", url: "https://ta-nehisicoates.substack.com/feed", tier: 300, category: "news" },
         { name: "Don Lemon", url: "https://donlemon.substack.com/feed", tier: 300, category: "news" },
         { name: "W. Kamau Bell", url: "https://wkamau.substack.com/feed", tier: 250, category: "news" },
         { name: "The Intersection (T. Johnson)", url: "https://theintersection.substack.com/feed", tier: 250, category: "news" },
-
-        // === NEWS: MAINSTREAM CONTEXT (Tier 250) ===
         { name: "NPR News", url: "https://feeds.npr.org/1001/rss.xml", tier: 240, category: "news" },
         { name: "Associated Press", url: "https://news.google.com/rss/search?q=when:48h+AP+News&hl=en-US&gl=US&ceid=US:en", tier: 240, category: "news" },
-
-        // === NEWS: INVESTIGATIVE & TECH ===
         { name: "The Plug (Tech)", url: "https://tpinsights.com/feed", tier: 250, category: "news" },
         { name: "Sherrell Dorsey", url: "https://sherrelldorsey.substack.com/feed", tier: 250, category: "news" },
         { name: "NYT: Race & Ethnicity", url: "https://www.nytimes.com/svc/collections/v1/publish/https://www.nytimes.com/topic/subject/race-and-ethnicity/rss.xml", tier: 300, category: "news" },
         { name: "Politico Picks", url: "https://www.politico.com/rss/politicopicks.xml", tier: 250, category: "news" },
-
-        // === NEWS: GENERAL ===
         { name: "Black Enterprise", url: "https://www.blackenterprise.com/feed/", tier: 300, category: "news" },
         { name: "The AFRO", url: "https://afro.com/feed/", tier: 300, category: "news" },
         { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300, category: "news" },
         { name: "The Root", url: "https://theroot.com/rss", tier: 220, category: "news" },
-
-        // === SPORTS SIGNAL ===
         { name: "Andscape", url: "https://andscape.com/feed", tier: 300, category: "sports" },
         { name: "The Shadow League", url: "https://theshadowleague.com/feed", tier: 300, category: "sports" },
         { name: "HBCU Gameday", url: "https://hbcugameday.com/feed", tier: 300, category: "sports" },
         { name: "Total Pro Sports", url: "https://www.totalprosports.com/feed/", tier: 250, category: "sports" },
         { name: "The Athletic (NYT)", url: "https://news.google.com/rss/search?q=when:48h+site:theathletic.com&hl=en-US&gl=US&ceid=US:en", tier: 280, category: "sports" },
-
-        // === SPORTS: STABLE MAINSTREAM (Tier 250) ===
         { name: "Yardbarker", url: "https://www.yardbarker.com/rss/main", tier: 250, category: "sports" },
         { name: "Deadspin", url: "https://deadspin.com/rss", tier: 250, category: "sports" },
-        
-        // === ENTERTAINMENT & CULTURE ===
         { name: "Variety", url: "https://variety.com/feed/", tier: 200, category: "entertainment" },
         { name: "The Hollywood Reporter", url: "https://hollywoodreporter.com/feed", tier: 200, category: "entertainment" },
         { name: "Blavity Entertainment", url: "https://blavity.com/categories/news/entertainment/feed", tier: 280, category: "entertainment" },
@@ -120,19 +107,19 @@
 
     function calculateScore(item, tier, content) {
         let score = tier;
-        const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
+        const pubDate = new Date(item.pubDate);
+        const hoursOld = (new Date() - pubDate) / 3600000;
         if (hoursOld < 12) score += 500;
         score -= (hoursOld * 5); 
         if (IMPACT_WORDS.some(word => content.includes(word))) score += 300;
-        if (hoursOld > 48) score -= 500; // Penalize but don't kill
+        if (hoursOld > 48) score -= 500;
         return Math.floor(score);
     }
 
-    async function fetchFeeds(cat) {
-        const targets = SOURCES.filter(s => s.category === cat);
+    async function fetchFeeds() {
         const debug = document.getElementById('debug-text');
         
-        const fetchPromises = targets.map(async (src) => {
+        const fetchPromises = SOURCES.map(async (src) => {
             try {
                 const proxy = "https://api.rss2json.com/v1/api.json?rss_url=";
                 const res = await fetch(proxy + encodeURIComponent(src.url));
@@ -141,27 +128,28 @@
                     syncedCount++;
                     data.items.forEach(item => {
                         const content = ((item.title || "") + " " + (item.description || "")).toLowerCase();
-                        allArticles.push({ ...item, source: src.name, score: calculateScore(item, src.tier, content), category: src.category });
+                        allArticles.push({ 
+                            ...item, 
+                            source: src.name, 
+                            score: calculateScore(item, src.tier, content), 
+                            category: src.category 
+                        });
                     });
+                    debug.innerText = `Synced ${syncedCount} of ${SOURCES.length} sources.`;
                 }
-            } catch (e) { console.warn(src.name + " skip"); }
+            } catch (e) { console.warn(src.name + " failed to load"); }
         });
 
         await Promise.allSettled(fetchPromises);
-        debug.innerText = `Synced ${syncedCount} of ${SOURCES.length} sources. Total articles: ${allArticles.length}`;
         renderFeed();
     }
 
-    async function init() {
+    function init() {
         const listEl = document.getElementById('source-list');
         [...new Set(SOURCES.map(s => s.name))].sort().forEach(name => {
             const li = document.createElement('li'); li.innerText = `• ${name}`; listEl.appendChild(li);
         });
-        
-        // Parallel loading for speed and stability
-        fetchFeeds('news');
-        fetchFeeds('sports');
-        fetchFeeds('entertainment');
+        fetchFeeds();
     }
 
     function switchCategory(cat, el) {
@@ -183,7 +171,7 @@
             .sort((a,b) => b.score - a.score)
             .filter(a => {
                 sourceCounts[a.source] = (sourceCounts[a.source] || 0) + 1;
-                return sourceCounts[a.source] <= 2; // Flood control
+                return sourceCounts[a.source] <= 2; 
             })
             .slice(0, 20);
 
