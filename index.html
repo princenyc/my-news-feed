@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Signal: Master Edition 2.7</title>
+    <title>The Signal: Master Edition 2.8</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Georgia&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #F0EEE9; --text: #141414; --accent: #d44; --card: #ffffff; --border-radius: 20px; }
@@ -27,18 +27,15 @@
         .article a { color: inherit; text-decoration: none; }
         .article a:hover { color: var(--accent); }
         .impact-badge { background: var(--accent); color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; }
-        .live-dot { color: var(--accent); font-weight: bold; margin-right: 5px; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(211, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(211, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(211, 68, 68, 0); } }
         footer { margin-top: 80px; padding: 60px 20px; border-top: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.02); }
-        #source-list { columns: 3; list-style: none; padding: 0; font-size: 0.8rem; opacity: 0.8; line-height: 2; }
-        @media (max-width: 768px) { .article.high-impact { grid-column: span 1; } #source-list { columns: 1; } }
+        #debug-panel { margin-top: 20px; padding: 15px; background: #eee; border-radius: 10px; font-family: monospace; font-size: 0.7rem; color: #333; display: block; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="ticker-wrap"><div class="ticker" id="ticker-content">Initializing Engine...</div></div>
         <div class="header"><h1>The Signal</h1><p><i>Intelligence for the Black Community</i></p></div>
-        <input type="text" id="searchBar" placeholder="Search the signal..." onkeyup="renderFeed()">
+        <input type="text" id="searchBar" placeholder="Search current tab..." onkeyup="renderFeed()">
         <div class="tab-nav">
             <button class="tab-btn active" onclick="switchCategory('news', this)">Top News</button>
             <button class="tab-btn" onclick="switchCategory('sports', this)">Sports</button>
@@ -47,38 +44,26 @@
         <div id="feed"></div>
     </div>
     <footer>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto;">
-            <div><h4>Safety Logic</h4><p>Engine 2.7 uses <b>Null-Safe</b> processing to prevent crashes from empty feeds.</p></div>
-            <div><h4>Flood Control</h4><p>Max 2 stories per source. Impact stories (+300) use a 48hr decay filter.</p></div>
-        </div>
-        <div style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 30px; max-width: 1200px; margin: 0 auto;">
+        <div id="debug-panel"><b>Diagnostics:</b> <span id="debug-text">Waiting for fetch...</span></div>
+        <div style="margin-top: 20px;">
              <h4>Active Signal Sources</h4>
-             <ul id="source-list"></ul>
+             <ul id="source-list" style="columns: 2; font-size: 0.8rem; opacity: 0.7;"></ul>
         </div>
     </footer>
 
 <script>
     const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "reparations", "wealth gap", "civil rights", "innovation", "homeownership"];
-    const CULTURE_WORDS = ["arts", "festival", "award", "celebrate", "excellence", "film", "music"];
-
+    
     const SOURCES = [
-        // === NEWS & SUBSTACKS ===
         { name: "Ta-Nehisi Coates", url: "https://ta-nehisicoates.substack.com/feed", tier: 300, category: "news" },
         { name: "Kareem Abdul-Jabbar", url: "https://kareem.substack.com/feed", tier: 300, category: "news" },
         { name: "Don Lemon", url: "https://donlemon.substack.com/feed", tier: 300, category: "news" },
         { name: "Black Enterprise", url: "https://www.blackenterprise.com/feed/", tier: 300, category: "news" },
         { name: "The AFRO", url: "https://afro.com/feed/", tier: 300, category: "news" },
-        { name: "NYT: Race & Ethnicity", url: "https://www.nytimes.com/svc/collections/v1/publish/https://www.nytimes.com/topic/subject/race-and-ethnicity/rss.xml", tier: 300, category: "news" },
-        { name: "The Plug (Tech)", url: "https://tpinsights.com/feed", tier: 250, category: "news" },
-        { name: "Sherrell Dorsey", url: "https://sherrelldorsey.substack.com/feed", tier: 250, category: "news" },
+        { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300, category: "news" },
         { name: "The Root", url: "https://theroot.com/rss", tier: 250, category: "news" },
-
-        // === SPORTS ===
         { name: "Andscape", url: "https://andscape.com/feed", tier: 300, category: "sports" },
-        { name: "The Shadow League", url: "https://theshadowleague.com/feed", tier: 300, category: "sports" },
         { name: "HBCU Gameday", url: "https://hbcugameday.com/feed", tier: 250, category: "sports" },
-
-        // === ENTERTAINMENT ===
         { name: "Variety", url: "https://variety.com/feed/", tier: 280, category: "entertainment" },
         { name: "Essence", url: "https://www.essence.com/feed/", tier: 250, category: "entertainment" },
         { name: "theJasmineBrand", url: "https://thejasminebrand.com/feed/", tier: 220, category: "entertainment" },
@@ -98,30 +83,27 @@
         return new Date(pubDate).toLocaleDateString();
     }
 
-    function calculateReadTime(item) {
-        // Null-safe read time
-        const text = (item.title || "") + " " + (item.description || "") + " " + (item.content || "");
-        const wordCount = text.replace(/<[^>]*>?/gm, '').split(/\s+/).length;
-        const mins = Math.ceil(wordCount / 200);
-        return mins <= 1 ? '1m read' : `${mins}m read`;
+    function calculateReadTime(text) {
+        const words = (text || "").replace(/<[^>]*>?/gm, '').split(/\s+/).length;
+        return `${Math.ceil(words / 200)}m read`;
     }
 
     function calculateScore(item, tier, content) {
         let score = tier;
         const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
-        if (hoursOld < 6) score += 500;
-        else if (hoursOld < 12) score += 250;
-        score -= (hoursOld * 10); // Decay logic
+        
+        if (hoursOld < 12) score += 500;
+        score -= (hoursOld * 5); // Relaxed decay for stability
+
         if (IMPACT_WORDS.some(word => content.includes(word))) score += 300;
-        if (hoursOld > 48) score = -1000; // Kill switch
         return Math.floor(score);
     }
 
     async function init() {
         const listEl = document.getElementById('source-list');
-        [...new Set(SOURCES.map(s => s.name))].sort().forEach(name => {
+        SOURCES.forEach(s => {
             const li = document.createElement('li');
-            li.innerText = `• ${name}`;
+            li.innerText = s.name;
             listEl.appendChild(li);
         });
         await fetchFeeds();
@@ -129,26 +111,28 @@
 
     async function fetchFeeds() {
         const container = document.getElementById('feed');
+        const debug = document.getElementById('debug-text');
         container.innerHTML = "<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>Decoding Signal...</div>";
-        allArticles = [];
         
-        // Use Promise.allSettled so one bad feed doesn't kill the batch
+        allArticles = [];
+        let successCount = 0;
+
         const fetchPromises = SOURCES.map(async (src) => {
             try {
-                const proxy = "https://api.rss2json.com/v1/api.json?rss_url=";
-                const res = await fetch(proxy + encodeURIComponent(src.url));
+                const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`);
                 const data = await res.json();
-                if(data && data.items) {
+                if(data.status === "ok") {
+                    successCount++;
                     data.items.forEach(item => {
                         const content = ((item.title || "") + " " + (item.description || "")).toLowerCase();
-                        const score = calculateScore(item, src.tier, content);
-                        allArticles.push({ ...item, source: src.name, score, category: src.category });
+                        allArticles.push({ ...item, source: src.name, score: calculateScore(item, src.tier, content), category: src.category });
                     });
                 }
-            } catch (e) { console.warn(src.name + " skip"); }
+            } catch (e) { console.warn(src.name + " failed"); }
         });
 
         await Promise.allSettled(fetchPromises);
+        debug.innerText = `Successfully synced ${successCount} of ${SOURCES.length} sources. Total articles: ${allArticles.length}`;
         renderFeed();
     }
 
@@ -164,33 +148,29 @@
         const searchVal = document.getElementById('searchBar').value.toLowerCase();
         container.innerHTML = "";
         const sourceCounts = {}; 
-        
+
         const filtered = allArticles
-            .filter(a => a.category === currentCategory && a.score > -500)
+            .filter(a => a.category === currentCategory)
             .filter(a => (a.title || "").toLowerCase().includes(searchVal))
             .sort((a,b) => b.score - a.score)
             .filter(a => {
                 sourceCounts[a.source] = (sourceCounts[a.source] || 0) + 1;
-                return sourceCounts[a.source] <= 2; // SOURCE CAP
+                return sourceCounts[a.source] <= 2; // Flood control
             })
             .slice(0, 20);
 
         if (filtered.length === 0) {
-            container.innerHTML = "<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>No current signal found for this tab.</div>";
-            return;
+            container.innerHTML = `<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>No stories found in ${currentCategory}. Check Diagnostics below.</div>`;
         }
 
         filtered.forEach(post => {
-            const isImpact = post.score > 800;
-            const readTime = calculateReadTime(post);
+            const isImpact = post.score > 600;
             const div = document.createElement('div');
             div.className = `article ${isImpact ? 'high-impact' : ''}`;
-            if (isImpact) div.style.animation = "pulse 2.5s infinite ease-in-out";
-
             div.innerHTML = `
-                <div class="meta"><span>${post.source} • ${readTime}</span><span>${getRelativeTime(post.pubDate)}</span></div>
+                <div class="meta"><span>${post.source} • ${calculateReadTime(post.description)}</span><span>${getRelativeTime(post.pubDate)}</span></div>
                 <h2><a href="${post.link}" target="_blank">${post.title || 'Untitled'}</a></h2>
-                <p>${(post.description || "").replace(/<[^>]*>?/gm, '').substring(0, 160)}...</p>
+                <p>${(post.description || "").replace(/<[^>]*>?/gm, '').substring(0, 150)}...</p>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
                     <span style="font-size: 0.7rem; opacity: 0.5;">Score: ${post.score}</span>
                     ${isImpact ? '<span class="impact-badge">IMPACT</span>' : ''}
@@ -198,9 +178,7 @@
             `;
             container.appendChild(div);
         });
-
-        const ticker = document.getElementById('ticker-content');
-        if (ticker) ticker.innerHTML = filtered.slice(0, 8).map(p => ` • ${p.title}`).join(' ');
+        document.getElementById('ticker-content').innerHTML = filtered.slice(0, 8).map(p => ` • ${p.title}`).join(' ');
     }
     init();
 </script>
