@@ -228,13 +228,22 @@
             renderFeed();
         }
 
-       function renderFeed() {
+      // 1. Helper: Estimate Reading Time
+function calculateReadTime(text) {
+    const wordsPerMinute = 200;
+    const noHtmlText = text.replace(/<[^>]*>?/gm, ''); // Strip HTML
+    const wordCount = noHtmlText.split(/\s+/).length;
+    const minutes = Math.ceil(wordCount / wordsPerMinute);
+    return minutes < 1 ? '1m read' : `${minutes}m read`;
+}
+
+// 2. Updated Render Function
+function renderFeed() {
     const container = document.getElementById('feed');
     const searchVal = document.getElementById('searchBar').value.toLowerCase();
     container.innerHTML = "";
     
-    // --- SOURCE CAP LOGIC ---
-    const MAX_PER_SOURCE = 2; // Change this to 3 if you want more variety
+    const MAX_PER_SOURCE = 2; 
     const sourceCounts = {}; 
 
     const filtered = allArticles
@@ -242,31 +251,32 @@
         .filter(a => a.title.toLowerCase().includes(searchVal) || a.source.toLowerCase().includes(searchVal))
         .sort((a,b) => b.score - a.score)
         .filter(a => {
-            // Check if we've seen this source too many times
             sourceCounts[a.source] = (sourceCounts[a.source] || 0) + 1;
             return sourceCounts[a.source] <= MAX_PER_SOURCE;
         })
-        .slice(0, 20); // Top 20 diverse stories
+        .slice(0, 20);
 
     filtered.forEach(post => {
-        const isHot = (new Date() - new Date(post.pubDate)) / 3600000 < 6;
+        const hoursOld = (new Date() - new Date(post.pubDate)) / 3600000;
+        const isHot = hoursOld < 6;
         const isImpact = post.score > 800;
+        const readTime = calculateReadTime(post.description + (post.content || ""));
         
         const div = document.createElement('div');
         div.className = `article ${isImpact ? 'high-impact' : ''}`;
         
-        // Add a subtle pulse to high-impact news
+        // Add subtle pulse for high-impact stories
         if (isImpact) div.style.animation = "pulse 2s infinite ease-in-out";
 
         div.innerHTML = `
             <div class="meta">
-                <span>${post.source}</span> 
+                <span>${post.source} • ${readTime}</span> 
                 <span>${isHot ? '<span class="live-dot">● LIVE</span>' : ''} ${getRelativeTime(post.pubDate)}</span>
             </div>
             <h2><a href="${post.link}" target="_blank">${post.title}</a></h2>
             <p>${post.description.replace(/<[^>]*>?/gm, '').substring(0, 160)}...</p>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
-                <span style="font-size: 0.7rem; opacity: 0.5;">Signal Score: ${post.score}</span>
+                <span style="font-size: 0.7rem; opacity: 0.5;">Score: ${post.score}</span>
                 ${isImpact ? '<span class="impact-badge">IMPACT</span>' : ''}
             </div>
         `;
