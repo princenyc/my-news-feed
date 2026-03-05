@@ -3,68 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Signal: Master Edition 2.9</title>
+    <title>The Signal: Performance Edition 3.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Georgia&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #F0EEE9; --text: #141414; --accent: #d44; --card: #ffffff; --border-radius: 20px; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.4; transition: 0.3s; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.4; }
         .container { max-width: 1200px; margin: 0 auto; }
-        
-        /* Ticker */
         .ticker-wrap { background: #000; color: #fff; padding: 12px; border-radius: 12px; margin-bottom: 20px; overflow: hidden; font-size: 0.8rem; text-transform: uppercase; font-weight: bold; min-height: 40px; display: flex; align-items: center; }
         .ticker { display: inline-block; animation: marquee 60s linear infinite; white-space: nowrap; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
-        
         .header { text-align: center; margin-bottom: 40px; }
         h1 { font-family: 'Georgia', serif; font-variant: small-caps; font-size: 3.5rem; margin: 0; letter-spacing: -1px; }
-        
         .tab-nav { display: flex; gap: 10px; margin-bottom: 30px; justify-content: center; }
         .tab-btn { background: var(--card); border: 1px solid transparent; color: var(--text); padding: 12px 28px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .tab-btn.active { background: var(--accent); color: white; transform: scale(1.05); }
-        
         #searchBar { width: 100%; max-width: 600px; display: block; margin: 0 auto 40px auto; padding: 15px 25px; border-radius: 30px; border: 1px solid rgba(0,0,0,0.1); background: var(--card); color: var(--text); font-size: 1rem; outline: none; }
-        
         #feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
-        .article { background: var(--card); border-radius: var(--border-radius); padding: 30px; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); transition: 0.3s; position: relative; }
+        .article { background: var(--card); border-radius: var(--border-radius); padding: 30px; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); transition: 0.3s; }
         .article:hover { transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
         .article.high-impact { grid-column: span 2; border-left: 5px solid var(--accent); }
-        
         .meta { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .article h2 { font-family: 'Georgia', serif; font-size: 1.65rem; margin: 0 0 15px 0; line-height: 1.2; font-weight: 700; }
         .article a { color: inherit; text-decoration: none; }
         .article a:hover { color: var(--accent); text-decoration: underline; }
-        
         .impact-badge { background: var(--accent); color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; }
-        
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(211, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(211, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(211, 68, 68, 0); } }
-        
         footer { margin-top: 80px; padding: 60px 20px; border-top: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.02); }
-        #debug-panel { margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.05); border-radius: 10px; font-family: monospace; font-size: 0.75rem; color: #333; border: 1px solid rgba(0,0,0,0.1); }
+        #debug-panel { margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.05); border-radius: 10px; font-family: monospace; font-size: 0.75rem; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="ticker-wrap"><div class="ticker" id="ticker-content">Initializing Engine...</div></div>
+        <div class="ticker-wrap"><div class="ticker" id="ticker-content">Priority Loading Active...</div></div>
         <div class="header"><h1>The Signal</h1><p><i>Intelligence for the Black Community</i></p></div>
-        
-        <input type="text" id="searchBar" placeholder="Search the signal..." onkeyup="renderFeed()">
-        
+        <input type="text" id="searchBar" placeholder="Search current signals..." onkeyup="renderFeed()">
         <div class="tab-nav">
             <button class="tab-btn active" onclick="switchCategory('news', this)">Top News</button>
             <button class="tab-btn" onclick="switchCategory('sports', this)">Sports</button>
             <button class="tab-btn" onclick="switchCategory('entertainment', this)">Entertainment</button>
         </div>
-
         <div id="feed"></div>
     </div>
-
     <footer>
-        <div id="debug-panel"><b>Diagnostics:</b> <span id="debug-text">Waiting for fetch...</span></div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto;">
-            <div><h4>Flood Control</h4><p>Limited to <b>2 stories per source</b> to ensure a diverse information environment.</p></div>
-            <div><h4>Intelligence Logic</h4><p>Reading times based on 200 wpm. Impact stories (+300) use a 48hr decay filter.</p></div>
-        </div>
-        <div style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 30px; max-width: 1200px; margin-left: auto; margin-right: auto;">
+        <div id="debug-panel"><b>Speed Diagnostics:</b> <span id="debug-text">Optimizing load...</span></div>
+        <div style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 30px; max-width: 1200px; margin: 0 auto;">
              <h4>Active Signal Sources</h4>
              <ul id="source-list" style="columns: 2; font-size: 0.8rem; opacity: 0.7; list-style: none; padding: 0;"></ul>
         </div>
@@ -72,49 +53,35 @@
 
 <script>
     const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "reparations", "wealth gap", "civil rights", "innovation", "homeownership"];
-    
     const SOURCES = [
-        // === NEWS: CELEBRITY JOURNALIST SIGNAL (Tier 250-300) ===
+        // === NEWS: CELEBRITY JOURNALIST SIGNAL ===
         { name: "Kareem Abdul-Jabbar", url: "https://kareem.substack.com/feed", tier: 300, category: "news" },
         { name: "Ta-Nehisi Coates", url: "https://ta-nehisicoates.substack.com/feed", tier: 300, category: "news" },
         { name: "Don Lemon", url: "https://donlemon.substack.com/feed", tier: 300, category: "news" },
         { name: "W. Kamau Bell", url: "https://wkamau.substack.com/feed", tier: 250, category: "news" },
-        { name: "The Intersection (T. Johnson)", url: "https://theintersection.substack.com/feed", tier: 250, category: "news" },
 
         // === NEWS: GENERAL & INVESTIGATIVE ===
         { name: "Black Enterprise", url: "https://www.blackenterprise.com/feed/", tier: 300, category: "news" },
         { name: "The AFRO", url: "https://afro.com/feed/", tier: 300, category: "news" },
         { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300, category: "news" },
         { name: "The Root", url: "https://theroot.com/rss", tier: 250, category: "news" },
-        { name: "The Plug (Tech)", url: "https://tpinsights.com/feed", tier: 250, category: "news" },
         { name: "NYT: Race & Ethnicity", url: "https://www.nytimes.com/svc/collections/v1/publish/https://www.nytimes.com/topic/subject/race-and-ethnicity/rss.xml", tier: 300, category: "news" },
 
         // === SPORTS SIGNAL ===
         { name: "Andscape", url: "https://andscape.com/feed", tier: 300, category: "sports" },
         { name: "The Shadow League", url: "https://theshadowleague.com/feed", tier: 300, category: "sports" },
         { name: "HBCU Gameday", url: "https://hbcugameday.com/feed", tier: 250, category: "sports" },
-        { name: "Total Pro Sports", url: "https://www.totalprosports.com/feed/", tier: 220, category: "sports" },
 
         // === ENTERTAINMENT & CULTURE ===
         { name: "Variety", url: "https://variety.com/feed/", tier: 280, category: "entertainment" },
         { name: "Essence", url: "https://www.essence.com/feed/", tier: 250, category: "entertainment" },
         { name: "theJasmineBrand", url: "https://thejasminebrand.com/feed/", tier: 220, category: "entertainment" },
-        { name: "Shadow and Act", url: "https://shadowandact.com/feed", tier: 220, category: "entertainment" },
-        { name: "The Shade Room", url: "https://theshaderoom.com/feed/", tier: 220, category: "entertainment" }
+        { name: "Shadow and Act", url: "https://shadowandact.com/feed", tier: 220, category: "entertainment" }
     ];
 
     let currentCategory = 'news';
     let allArticles = [];
-
-    function getRelativeTime(pubDate) {
-        if (!pubDate) return "";
-        const diff = new Date() - new Date(pubDate);
-        const mins = Math.floor(diff / 60000);
-        const hrs = Math.floor(mins / 60);
-        if (mins < 60) return `${mins}m ago`;
-        if (hrs < 24) return `${hrs}h ago`;
-        return new Date(pubDate).toLocaleDateString();
-    }
+    let fetchedCategories = new Set();
 
     function calculateReadTime(text) {
         const words = (text || "").replace(/<[^>]*>?/gm, '').split(/\s+/).length;
@@ -125,34 +92,20 @@
         let score = tier;
         const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
         if (hoursOld < 12) score += 500;
-        score -= (hoursOld * 5); // Decay logic
+        score -= (hoursOld * 5); 
         if (IMPACT_WORDS.some(word => content.includes(word))) score += 300;
         return Math.floor(score);
     }
 
-    async function init() {
-        const listEl = document.getElementById('source-list');
-        [...new Set(SOURCES.map(s => s.name))].sort().forEach(name => {
-            const li = document.createElement('li');
-            li.innerText = `• ${name}`;
-            listEl.appendChild(li);
-        });
-        await fetchFeeds();
-    }
-
-    async function fetchFeeds() {
-        const container = document.getElementById('feed');
+    async function fetchFeeds(cat) {
+        const targets = SOURCES.filter(s => s.category === cat);
         const debug = document.getElementById('debug-text');
-        container.innerHTML = "<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>Decoding Signal...</div>";
-        allArticles = [];
-        let successCount = 0;
-
-        const fetchPromises = SOURCES.map(async (src) => {
+        
+        const fetchPromises = targets.map(async (src) => {
             try {
                 const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`);
                 const data = await res.json();
                 if(data.status === "ok") {
-                    successCount++;
                     data.items.forEach(item => {
                         const content = ((item.title || "") + " " + (item.description || "")).toLowerCase();
                         allArticles.push({ ...item, source: src.name, score: calculateScore(item, src.tier, content), category: src.category });
@@ -162,8 +115,22 @@
         });
 
         await Promise.allSettled(fetchPromises);
-        debug.innerText = `Successfully synced ${successCount} of ${SOURCES.length} sources. Total articles: ${allArticles.length}`;
+        fetchedCategories.add(cat);
+        debug.innerText = `Synced: ${[...fetchedCategories].join(', ')}. Total Articles: ${allArticles.length}`;
         renderFeed();
+    }
+
+    async function init() {
+        const listEl = document.getElementById('source-list');
+        [...new Set(SOURCES.map(s => s.name))].sort().forEach(name => {
+            const li = document.createElement('li'); li.innerText = `• ${name}`; listEl.appendChild(li);
+        });
+        
+        // Priority 1: News
+        await fetchFeeds('news');
+        // Background: Others
+        fetchFeeds('sports');
+        fetchFeeds('entertainment');
     }
 
     function switchCategory(cat, el) {
@@ -176,9 +143,8 @@
     function renderFeed() {
         const container = document.getElementById('feed');
         const searchVal = document.getElementById('searchBar').value.toLowerCase();
-        container.innerHTML = "";
         const sourceCounts = {}; 
-
+        
         const filtered = allArticles
             .filter(a => a.category === currentCategory)
             .filter(a => (a.title || "").toLowerCase().includes(searchVal))
@@ -189,19 +155,14 @@
             })
             .slice(0, 20);
 
-        if (filtered.length === 0) {
-            container.innerHTML = `<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>No current signal found in ${currentCategory}.</div>`;
-            return;
-        }
+        container.innerHTML = filtered.length ? "" : `<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>No signal in ${currentCategory} yet...</div>`;
 
         filtered.forEach(post => {
             const isImpact = post.score > 600;
             const div = document.createElement('div');
             div.className = `article ${isImpact ? 'high-impact' : ''}`;
-            if (isImpact) div.style.animation = "pulse 2.5s infinite ease-in-out";
-
             div.innerHTML = `
-                <div class="meta"><span>${post.source} • ${calculateReadTime(post.description)}</span><span>${getRelativeTime(post.pubDate)}</span></div>
+                <div class="meta"><span>${post.source} • ${calculateReadTime(post.description)}</span></div>
                 <h2><a href="${post.link}" target="_blank">${post.title || 'Untitled'}</a></h2>
                 <p>${(post.description || "").replace(/<[^>]*>?/gm, '').substring(0, 150)}...</p>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
