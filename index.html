@@ -28,7 +28,7 @@
         .article a:hover { color: var(--accent); }
         .impact-badge { background: var(--accent); color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; }
         footer { margin-top: 80px; padding: 60px 20px; border-top: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.02); }
-        #debug-panel { margin-top: 20px; padding: 15px; background: #eee; border-radius: 10px; font-family: monospace; font-size: 0.7rem; color: #333; display: block; }
+        #debug-panel { margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.05); border-radius: 10px; font-family: monospace; font-size: 0.75rem; color: #333; border: 1px solid rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -45,9 +45,13 @@
     </div>
     <footer>
         <div id="debug-panel"><b>Diagnostics:</b> <span id="debug-text">Waiting for fetch...</span></div>
-        <div style="margin-top: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 40px; max-width: 1200px; margin: 20px auto 0 auto;">
+            <div><h4>Flood Control</h4><p>Limited to <b>2 stories per source</b> to ensure a diverse information environment.</p></div>
+            <div><h4>Intelligence Logic</h4><p>Impact stories (+300) use a 48hr decay filter. News is weighted by category.</p></div>
+        </div>
+        <div style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 30px; max-width: 1200px; margin-left: auto; margin-right: auto;">
              <h4>Active Signal Sources</h4>
-             <ul id="source-list" style="columns: 2; font-size: 0.8rem; opacity: 0.7;"></ul>
+             <ul id="source-list" style="columns: 2; font-size: 0.8rem; opacity: 0.7; list-style: none; padding: 0;"></ul>
         </div>
     </footer>
 
@@ -62,6 +66,8 @@
         { name: "The AFRO", url: "https://afro.com/feed/", tier: 300, category: "news" },
         { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300, category: "news" },
         { name: "The Root", url: "https://theroot.com/rss", tier: 250, category: "news" },
+        { name: "The Plug (Tech)", url: "https://tpinsights.com/feed", tier: 250, category: "news" },
+        { name: "NYT: Race & Ethnicity", url: "https://www.nytimes.com/svc/collections/v1/publish/https://www.nytimes.com/topic/subject/race-and-ethnicity/rss.xml", tier: 300, category: "news" },
         { name: "Andscape", url: "https://andscape.com/feed", tier: 300, category: "sports" },
         { name: "HBCU Gameday", url: "https://hbcugameday.com/feed", tier: 250, category: "sports" },
         { name: "Variety", url: "https://variety.com/feed/", tier: 280, category: "entertainment" },
@@ -91,19 +97,17 @@
     function calculateScore(item, tier, content) {
         let score = tier;
         const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
-        
         if (hoursOld < 12) score += 500;
-        score -= (hoursOld * 5); // Relaxed decay for stability
-
+        score -= (hoursOld * 5); 
         if (IMPACT_WORDS.some(word => content.includes(word))) score += 300;
         return Math.floor(score);
     }
 
     async function init() {
         const listEl = document.getElementById('source-list');
-        SOURCES.forEach(s => {
+        [...new Set(SOURCES.map(s => s.name))].sort().forEach(name => {
             const li = document.createElement('li');
-            li.innerText = s.name;
+            li.innerText = `• ${name}`;
             listEl.appendChild(li);
         });
         await fetchFeeds();
@@ -113,7 +117,6 @@
         const container = document.getElementById('feed');
         const debug = document.getElementById('debug-text');
         container.innerHTML = "<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>Decoding Signal...</div>";
-        
         allArticles = [];
         let successCount = 0;
 
@@ -155,12 +158,13 @@
             .sort((a,b) => b.score - a.score)
             .filter(a => {
                 sourceCounts[a.source] = (sourceCounts[a.source] || 0) + 1;
-                return sourceCounts[a.source] <= 2; // Flood control
+                return sourceCounts[a.source] <= 2; 
             })
             .slice(0, 20);
 
         if (filtered.length === 0) {
-            container.innerHTML = `<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>No stories found in ${currentCategory}. Check Diagnostics below.</div>`;
+            container.innerHTML = `<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>No current signal found in ${currentCategory}.</div>`;
+            return;
         }
 
         filtered.forEach(post => {
