@@ -284,6 +284,7 @@ function renderFeed() {
     });
 
     document.getElementById('ticker-content').innerHTML = filtered.slice(0, 8).map(p => ` • ${p.title}`).join(' ');
+    }
 }
         init();
     </script>
