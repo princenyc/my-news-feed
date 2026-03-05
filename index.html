@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Signal: Master Edition 2.5</title>
+    <title>The Signal: Master Edition 2.7</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Georgia&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #F0EEE9; --text: #141414; --accent: #d44; --card: #ffffff; --border-radius: 20px; }
-        [data-theme="dark"] { --bg: #121212; --text: #e0e0e0; --card: #1e1e1e; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.4; transition: 0.3s; }
         .container { max-width: 1200px; margin: 0 auto; }
-        .ticker-wrap { background: #000; color: #fff; padding: 12px; border-radius: 12px; margin-bottom: 20px; overflow: hidden; font-size: 0.8rem; text-transform: uppercase; font-weight: bold; }
+        .ticker-wrap { background: #000; color: #fff; padding: 12px; border-radius: 12px; margin-bottom: 20px; overflow: hidden; font-size: 0.8rem; text-transform: uppercase; font-weight: bold; min-height: 40px; display: flex; align-items: center; }
         .ticker { display: inline-block; animation: marquee 60s linear infinite; white-space: nowrap; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
         .header { text-align: center; margin-bottom: 40px; }
-        h1 { font-family: 'Georgia', serif; font-variant: small-caps; font-size: 3.5rem; margin: 0; }
+        h1 { font-family: 'Georgia', serif; font-variant: small-caps; font-size: 3.5rem; margin: 0; letter-spacing: -1px; }
         .tab-nav { display: flex; gap: 10px; margin-bottom: 30px; justify-content: center; }
         .tab-btn { background: var(--card); border: 1px solid transparent; color: var(--text); padding: 12px 28px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .tab-btn.active { background: var(--accent); color: white; transform: scale(1.05); }
@@ -23,7 +22,7 @@
         .article { background: var(--card); border-radius: var(--border-radius); padding: 30px; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); transition: 0.3s; position: relative; }
         .article:hover { transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
         .article.high-impact { grid-column: span 2; border-left: 5px solid var(--accent); }
-        .meta { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .meta { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .article h2 { font-family: 'Georgia', serif; font-size: 1.65rem; margin: 0 0 15px 0; line-height: 1.2; font-weight: 700; }
         .article a { color: inherit; text-decoration: none; }
         .article a:hover { color: var(--accent); }
@@ -37,7 +36,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="ticker-wrap"><div class="ticker" id="ticker-content">Syncing 2026 Signal...</div></div>
+        <div class="ticker-wrap"><div class="ticker" id="ticker-content">Initializing Engine...</div></div>
         <div class="header"><h1>The Signal</h1><p><i>Intelligence for the Black Community</i></p></div>
         <input type="text" id="searchBar" placeholder="Search the signal..." onkeyup="renderFeed()">
         <div class="tab-nav">
@@ -49,8 +48,8 @@
     </div>
     <footer>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto;">
-            <div><h4>Flood Control</h4><p>Limited to <b>2 stories per source</b> to ensure a diverse information environment.</p></div>
-            <div><h4>Intelligence Logic</h4><p>Reading times based on 200 wpm. Impact stories (+300) use a 48hr decay filter.</p></div>
+            <div><h4>Safety Logic</h4><p>Engine 2.7 uses <b>Null-Safe</b> processing to prevent crashes from empty feeds.</p></div>
+            <div><h4>Flood Control</h4><p>Max 2 stories per source. Impact stories (+300) use a 48hr decay filter.</p></div>
         </div>
         <div style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 30px; max-width: 1200px; margin: 0 auto;">
              <h4>Active Signal Sources</h4>
@@ -67,23 +66,20 @@
         { name: "Ta-Nehisi Coates", url: "https://ta-nehisicoates.substack.com/feed", tier: 300, category: "news" },
         { name: "Kareem Abdul-Jabbar", url: "https://kareem.substack.com/feed", tier: 300, category: "news" },
         { name: "Don Lemon", url: "https://donlemon.substack.com/feed", tier: 300, category: "news" },
-        { name: "Steady (Dan Rather)", url: "https://steady.substack.com/feed", tier: 300, category: "news" },
         { name: "Black Enterprise", url: "https://www.blackenterprise.com/feed/", tier: 300, category: "news" },
+        { name: "The AFRO", url: "https://afro.com/feed/", tier: 300, category: "news" },
         { name: "NYT: Race & Ethnicity", url: "https://www.nytimes.com/svc/collections/v1/publish/https://www.nytimes.com/topic/subject/race-and-ethnicity/rss.xml", tier: 300, category: "news" },
         { name: "The Plug (Tech)", url: "https://tpinsights.com/feed", tier: 250, category: "news" },
         { name: "Sherrell Dorsey", url: "https://sherrelldorsey.substack.com/feed", tier: 250, category: "news" },
-        { name: "W. Kamau Bell", url: "https://wkamau.substack.com/feed", tier: 250, category: "news" },
         { name: "The Root", url: "https://theroot.com/rss", tier: 250, category: "news" },
-        
+
         // === SPORTS ===
         { name: "Andscape", url: "https://andscape.com/feed", tier: 300, category: "sports" },
         { name: "The Shadow League", url: "https://theshadowleague.com/feed", tier: 300, category: "sports" },
         { name: "HBCU Gameday", url: "https://hbcugameday.com/feed", tier: 250, category: "sports" },
-        { name: "Total Pro Sports", url: "https://www.totalprosports.com/feed/", tier: 220, category: "sports" },
 
         // === ENTERTAINMENT ===
         { name: "Variety", url: "https://variety.com/feed/", tier: 280, category: "entertainment" },
-        { name: "Shadow and Act", url: "https://shadowandact.com/feed", tier: 250, category: "entertainment" },
         { name: "Essence", url: "https://www.essence.com/feed/", tier: 250, category: "entertainment" },
         { name: "theJasmineBrand", url: "https://thejasminebrand.com/feed/", tier: 220, category: "entertainment" },
         { name: "The Shade Room", url: "https://theshaderoom.com/feed/", tier: 220, category: "entertainment" }
@@ -93,6 +89,7 @@
     let allArticles = [];
 
     function getRelativeTime(pubDate) {
+        if (!pubDate) return "";
         const diff = new Date() - new Date(pubDate);
         const mins = Math.floor(diff / 60000);
         const hrs = Math.floor(mins / 60);
@@ -101,10 +98,12 @@
         return new Date(pubDate).toLocaleDateString();
     }
 
-    function calculateReadTime(text) {
+    function calculateReadTime(item) {
+        // Null-safe read time
+        const text = (item.title || "") + " " + (item.description || "") + " " + (item.content || "");
         const wordCount = text.replace(/<[^>]*>?/gm, '').split(/\s+/).length;
         const mins = Math.ceil(wordCount / 200);
-        return mins < 1 ? '1m read' : `${mins}m read`;
+        return mins <= 1 ? '1m read' : `${mins}m read`;
     }
 
     function calculateScore(item, tier, content) {
@@ -112,10 +111,9 @@
         const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
         if (hoursOld < 6) score += 500;
         else if (hoursOld < 12) score += 250;
-        score -= (hoursOld * 10); 
+        score -= (hoursOld * 10); // Decay logic
         if (IMPACT_WORDS.some(word => content.includes(word))) score += 300;
-        if (CULTURE_WORDS.some(word => content.includes(word))) score += 100;
-        if (hoursOld > 48) score = -1000; 
+        if (hoursOld > 48) score = -1000; // Kill switch
         return Math.floor(score);
     }
 
@@ -131,22 +129,26 @@
 
     async function fetchFeeds() {
         const container = document.getElementById('feed');
-        container.innerHTML = "<div style='grid-column: 1/-1; text-align: center;'>Decoding 2026 Signal...</div>";
+        container.innerHTML = "<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>Decoding Signal...</div>";
         allArticles = [];
+        
+        // Use Promise.allSettled so one bad feed doesn't kill the batch
         const fetchPromises = SOURCES.map(async (src) => {
             try {
-                const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`);
+                const proxy = "https://api.rss2json.com/v1/api.json?rss_url=";
+                const res = await fetch(proxy + encodeURIComponent(src.url));
                 const data = await res.json();
-                if(data.items) {
+                if(data && data.items) {
                     data.items.forEach(item => {
-                        const content = (item.title + " " + item.description).toLowerCase();
+                        const content = ((item.title || "") + " " + (item.description || "")).toLowerCase();
                         const score = calculateScore(item, src.tier, content);
                         allArticles.push({ ...item, source: src.name, score, category: src.category });
                     });
                 }
-            } catch (e) { console.error(src.name + " failed"); }
+            } catch (e) { console.warn(src.name + " skip"); }
         });
-        await Promise.all(fetchPromises);
+
+        await Promise.allSettled(fetchPromises);
         renderFeed();
     }
 
@@ -165,7 +167,7 @@
         
         const filtered = allArticles
             .filter(a => a.category === currentCategory && a.score > -500)
-            .filter(a => a.title.toLowerCase().includes(searchVal) || a.source.toLowerCase().includes(searchVal))
+            .filter(a => (a.title || "").toLowerCase().includes(searchVal))
             .sort((a,b) => b.score - a.score)
             .filter(a => {
                 sourceCounts[a.source] = (sourceCounts[a.source] || 0) + 1;
@@ -173,18 +175,22 @@
             })
             .slice(0, 20);
 
+        if (filtered.length === 0) {
+            container.innerHTML = "<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>No current signal found for this tab.</div>";
+            return;
+        }
+
         filtered.forEach(post => {
-            const isHot = (new Date() - new Date(post.pubDate)) / 3600000 < 6;
             const isImpact = post.score > 800;
-            const readTime = calculateReadTime(post.description + (post.content || ""));
+            const readTime = calculateReadTime(post);
             const div = document.createElement('div');
             div.className = `article ${isImpact ? 'high-impact' : ''}`;
             if (isImpact) div.style.animation = "pulse 2.5s infinite ease-in-out";
 
             div.innerHTML = `
-                <div class="meta"><span>${post.source} • ${readTime}</span><span>${isHot ? '<span class="live-dot">● LIVE</span>' : ''} ${getRelativeTime(post.pubDate)}</span></div>
-                <h2><a href="${post.link}" target="_blank">${post.title}</a></h2>
-                <p>${post.description.replace(/<[^>]*>?/gm, '').substring(0, 160)}...</p>
+                <div class="meta"><span>${post.source} • ${readTime}</span><span>${getRelativeTime(post.pubDate)}</span></div>
+                <h2><a href="${post.link}" target="_blank">${post.title || 'Untitled'}</a></h2>
+                <p>${(post.description || "").replace(/<[^>]*>?/gm, '').substring(0, 160)}...</p>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
                     <span style="font-size: 0.7rem; opacity: 0.5;">Score: ${post.score}</span>
                     ${isImpact ? '<span class="impact-badge">IMPACT</span>' : ''}
@@ -192,7 +198,9 @@
             `;
             container.appendChild(div);
         });
-        document.getElementById('ticker-content').innerHTML = filtered.slice(0, 8).map(p => ` • ${p.title}`).join(' ');
+
+        const ticker = document.getElementById('ticker-content');
+        if (ticker) ticker.innerHTML = filtered.slice(0, 8).map(p => ` • ${p.title}`).join(' ');
     }
     init();
 </script>
