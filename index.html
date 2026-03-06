@@ -3,48 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Signal: World Monitor 4.0</title>
+    <title>The Signal: Geographic Intelligence v4.1</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Georgia&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --bg: #F0EEE9; --text: #141414; --accent: #d44; --card: #ffffff; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1400px; margin: 0 auto; }
         
-        /* Map Styling */
-        #map { height: 500px; width: 100%; border-radius: 20px; margin-bottom: 30px; border: 2px solid #000; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 1; }
-        .leaflet-tile { filter: grayscale(1) invert(1) opacity(0.2); } /* Minimalist 2026 Map Style */
+        /* Expanded Map Container */
+        #map { height: 750px; width: 100%; border-radius: 20px; margin-bottom: 30px; border: 2px solid #000; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 1; }
+        .leaflet-tile { filter: grayscale(1) invert(1) opacity(0.15); } /* High-Contrast 2026 Style */
 
-        .header { text-align: center; margin-bottom: 30px; }
-        h1 { font-family: 'Georgia', serif; font-variant: small-caps; font-size: 3rem; margin: 0; }
-        .tab-nav { display: flex; gap: 10px; margin-bottom: 30px; justify-content: center; }
-        .tab-btn { background: var(--card); border: 1px solid #ddd; padding: 12px 28px; border-radius: 30px; cursor: pointer; font-weight: 600; }
-        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-        #feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        h1 { font-family: 'Georgia', serif; font-variant: small-caps; font-size: 3.5rem; margin: 0; }
+        #feed-title { font-weight: 800; text-transform: uppercase; margin-top: 40px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        #feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; margin-top: 20px; }
         .article { background: var(--card); border-radius: 20px; padding: 25px; border: 1px solid rgba(0,0,0,0.05); }
-        .meta { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 10px; }
-        footer { margin-top: 50px; padding: 30px; background: rgba(0,0,0,0.05); border-radius: 10px; font-family: monospace; font-size: 0.75rem; }
+        footer { margin-top: 50px; padding: 30px; background: rgba(0,0,0,0.05); border-radius: 10px; font-family: monospace; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header"><h1>The Signal</h1><p><i>Geospatial Intelligence for the Black Community</i></p></div>
+        <div class="header"><h1>The Signal</h1><p><i>Geospatial Intelligence Dashboard</i></p></div>
         
         <div id="map"></div>
 
-        <div class="tab-nav">
-            <button class="tab-btn active" onclick="switchCategory('news', this)">Top News</button>
-            <button class="tab-btn" onclick="switchCategory('sports', this)">Sports</button>
-            <button class="tab-btn" onclick="switchCategory('entertainment', this)">Entertainment</button>
-        </div>
+        <h2 id="feed-title">Global Signal Feed</h2>
         <div id="feed"></div>
     </div>
-    <footer><div id="debug-text">Initializing Geospatial Engine...</div></footer>
+    <footer><div id="debug-text">Initializing Advanced Layers...</div></footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // 1. Map Configuration
-    let map, markers = [];
+    // 1. Core Map & Layer Configuration
+    let map;
+    const categoryLayers = {
+        "News": L.layerGroup(),
+        "Sports": L.layerGroup(),
+        "Entertainment": L.layerGroup()
+    };
+
     const CITY_COORDS = {
         "atlanta": [33.7490, -84.3880], "chicago": [41.8781, -87.6298], "detroit": [42.3314, -83.0458],
         "baltimore": [39.2904, -76.6122], "philly": [39.9526, -75.1652], "houston": [29.7604, -95.3698],
@@ -61,20 +60,33 @@
         { name: "Blavity Entertainment", url: "https://blavity.com/categories/news/entertainment/feed", tier: 280, category: "entertainment" }
     ];
 
-    let allArticles = [], currentCategory = 'news';
+    let allArticles = [];
 
-    // 2. City Spotter Logic
+    function initMap() {
+        // Initialize at higher zoom for the 750px height
+        map = L.map('map').setView([37.8, -96], 4.5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        // Add Layer Control
+        const overlays = {
+            "News Stories": categoryLayers.News,
+            "Sports Signals": categoryLayers.Sports,
+            "Culture Hits": categoryLayers.Entertainment
+        };
+        L.control.layers(null, overlays).addTo(map);
+
+        // Display all by default
+        categoryLayers.News.addTo(map);
+        categoryLayers.Sports.addTo(map);
+        categoryLayers.Entertainment.addTo(map);
+    }
+
     function getCoords(text) {
         const lower = text.toLowerCase();
         for (const [city, coord] of Object.entries(CITY_COORDS)) {
             if (lower.includes(city)) return coord;
         }
         return null;
-    }
-
-    function initMap() {
-        map = L.map('map').setView([37.8, -96], 4);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     }
 
     async function fetchFeeds() {
@@ -93,7 +105,7 @@
             } catch (e) { console.warn(src.name + " failed"); }
         });
         await Promise.allSettled(fetchPromises);
-        debug.innerText = `World Monitor Live: ${allArticles.length} signals detected.`;
+        debug.innerText = `World Monitor Live: Layers Populated.`;
         renderFeed();
     }
 
@@ -101,20 +113,28 @@
         const container = document.getElementById('feed');
         container.innerHTML = "";
         
-        // Clear old markers
-        markers.forEach(m => map.removeLayer(m));
-        markers = [];
+        // Clear all layers before repopulating
+        Object.values(categoryLayers).forEach(layer => layer.clearLayers());
 
-        const filtered = allArticles.filter(a => a.category === currentCategory).slice(0, 20);
-
-        filtered.forEach(post => {
-            // Add Map Marker if city spotted
+        allArticles.forEach(post => {
             if (post.coords) {
-                const m = L.marker(post.coords).addTo(map)
-                    .bindPopup(`<b>${post.source}</b><br>${post.title}`);
-                markers.push(m);
+                // Determine category layer
+                let layerKey = "News";
+                if(post.category === "sports") layerKey = "Sports";
+                if(post.category === "entertainment") layerKey = "Entertainment";
+
+                // Bind Popup with Headline Link
+                const popupContent = `
+                    <div style="font-family:Inter; padding:5px;">
+                        <span style="font-size:0.7rem; color:#888; font-weight:800; text-transform:uppercase;">${post.source}</span>
+                        <h4 style="margin:5px 0;"><a href="${post.link}" target="_blank" style="color:#d44; text-decoration:none;">${post.title}</a></h4>
+                        <p style="font-size:0.8rem; margin:0;">${post.description.replace(/<[^>]*>?/gm, '').substring(0, 80)}...</p>
+                    </div>
+                `;
+                L.marker(post.coords).addTo(categoryLayers[layerKey]).bindPopup(popupContent);
             }
 
+            // Also keep the list below for quick scrolling
             const div = document.createElement('div');
             div.className = 'article';
             div.innerHTML = `
@@ -124,13 +144,6 @@
             `;
             container.appendChild(div);
         });
-    }
-
-    function switchCategory(cat, el) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
-        currentCategory = cat;
-        renderFeed();
     }
 
     initMap();
