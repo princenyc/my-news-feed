@@ -3,44 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Signal: GEOINT Command v4.2</title>
+    <title>The Signal: Total Intelligence v4.5</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --bg: #0a0a0a; --text: #e0e0e0; --accent: #d44; --panel: #1a1a1a; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; overflow: hidden; }
+        :root { --bg: #050505; --accent: #ff3e3e; --news: #ff4444; --sports: #44aaff; --culture: #ffaa44; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; overflow: hidden; }
         
-        /* Map Command Center */
-        #map { height: 100vh; width: 100vw; z-index: 1; }
-        .leaflet-tile { filter: brightness(0.4) contrast(1.2) grayscale(1) invert(1); } 
+        /* Tactical Command Map */
+        #map { height: 100vh; width: 100vw; background: #000; }
+        .leaflet-tile { filter: brightness(0.3) contrast(1.2) grayscale(1) invert(1) opacity(0.3); }
 
-        /* Floating Intelligence Panel */
-        .control-panel {
-            position: absolute; top: 20px; left: 20px; width: 320px; z-index: 1000;
-            background: var(--panel); border: 1px solid #333; border-radius: 12px;
-            padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        /* Floating Intelligence HUD */
+        .hud {
+            position: absolute; top: 20px; left: 20px; width: 340px; z-index: 1000;
+            background: rgba(15, 15, 15, 0.9); border: 1px solid #333; border-radius: 12px;
+            padding: 25px; backdrop-filter: blur(10px); box-shadow: 0 0 30px rgba(0,0,0,1);
         }
-        h1 { font-size: 1.5rem; margin: 0 0 5px 0; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
-        .layer-toggle { display: flex; align-items: center; gap: 10px; margin-top: 15px; font-size: 0.8rem; font-weight: 800; cursor: pointer; }
-        .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; }
+        h1 { font-size: 1.4rem; color: var(--accent); letter-spacing: 3px; margin: 0; text-transform: uppercase; }
+        .status-bar { font-size: 0.65rem; color: #0f0; margin-top: 5px; font-family: monospace; }
+        
+        .filter-item { display: flex; align-items: center; gap: 12px; margin-top: 15px; font-size: 0.75rem; font-weight: 700; cursor: pointer; opacity: 0.7; transition: 0.2s; }
+        .filter-item:hover { opacity: 1; }
+        .dot { height: 10px; width: 10px; border-radius: 50%; }
 
-        /* Custom Popup Styling */
-        .leaflet-popup-content-wrapper { background: #1a1a1a; color: white; border: 1px solid #444; }
-        .leaflet-popup-tip { background: #1a1a1a; }
+        /* Custom Popup styling */
+        .leaflet-popup-content-wrapper { background: #111; color: #fff; border: 1px solid #444; border-radius: 8px; }
+        .leaflet-popup-tip { background: #444; }
+        .popup-link { color: var(--accent); font-weight: 800; text-decoration: none; }
     </style>
 </head>
 <body>
 
-    <div class="control-panel">
+    <div class="hud">
         <h1>The Signal</h1>
-        <p style="font-size: 0.7rem; color: #888; margin-bottom: 20px;">Geospatial Community Intelligence</p>
+        <div class="status-bar" id="status">INITIALIZING 24H LIVE SCAN...</div>
         
-        <div class="layer-toggle" onclick="toggleLayer('news')"><span class="dot" style="background: #ff4444;"></span> NEWS & JUSTICE</div>
-        <div class="layer-toggle" onclick="toggleLayer('sports')"><span class="dot" style="background: #44aaff;"></span> SPORTS & LABOR</div>
-        <div class="layer-toggle" onclick="toggleLayer('entertainment')"><span class="dot" style="background: #ffaa44;"></span> CULTURE & ARTS</div>
-        <div class="layer-toggle" onclick="toggleWeather()"><span class="dot" style="background: #ffffff;"></span> WEATHER OVERLAY</div>
+        <div class="filter-item" onclick="toggleLayer('news')"><div class="dot" style="background:var(--news)"></div> NEWS & POLICY</div>
+        <div class="filter-item" onclick="toggleLayer('sports')"><div class="dot" style="background:var(--sports)"></div> SPORTS & BUSINESS</div>
+        <div class="filter-item" onclick="toggleLayer('entertainment')"><div class="dot" style="background:var(--culture)"></div> CULTURE & ENTERTAINMENT</div>
+        <div class="filter-item" onclick="toggleWeather()"><div class="dot" style="background:#fff"></div> WEATHER RADAR (LIVE)</div>
         
-        <div id="stats" style="margin-top: 30px; font-size: 0.7rem; opacity: 0.5;">
-            Syncing Global Signal...
+        <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
+            <p style="font-size: 0.65rem; color: #666; line-height: 1.5;">
+                <b>CRITERIA:</b> No source limits. No score barriers. 24-hour posting window only. <br>
+                <b>GEO-LOCATE:</b> Deep-scan headline & body for city markers.
+            </p>
         </div>
     </div>
 
@@ -48,71 +55,96 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    let map, layers = { news: L.layerGroup(), sports: L.layerGroup(), entertainment: L.layerGroup() };
-    let weatherLayer = L.tileLayer('https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=YOUR_API_KEY'); // Placeholder
-
-    const CITY_COORDS = {
+    // 1. Comprehensive City Database for "Deep Scan"
+    const GEODATA = {
         "atlanta": [33.7490, -84.3880], "chicago": [41.8781, -87.6298], "detroit": [42.3314, -83.0458],
-        "baltimore": [39.2904, -76.6122], "philly": [39.9526, -75.1652], "houston": [29.7604, -95.3698],
-        "new orleans": [29.9511, -90.0715], "harlem": [40.8116, -73.9465], "dc": [38.9072, -77.0369]
+        "baltimore": [39.2904, -76.6122], "philly": [39.9526, -75.1652], "philadelphia": [39.9526, -75.1652],
+        "houston": [29.7604, -95.3698], "new orleans": [29.9511, -90.0715], "harlem": [40.8116, -73.9465],
+        "brooklyn": [40.6782, -73.9442], "dc": [38.9072, -77.0369], "washington": [38.9072, -77.0369],
+        "oakland": [37.8044, -122.2712], "memphis": [35.1495, -90.0490], "st. louis": [38.6270, -90.1994],
+        "miami": [25.7617, -80.1918], "los angeles": [34.0522, -118.2437], "birmingham": [33.5186, -86.8104]
     };
 
-    const SOURCES = [
-        { name: "Atlanta Voice", url: "https://theatlantavoice.com/feed/", cat: "news", color: "#ff4444" },
-        { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", cat: "news", color: "#ff4444" },
-        { name: "Andscape", url: "https://andscape.com/feed", cat: "sports", color: "#44aaff" },
-        { name: "Blavity Entertainment", url: "https://blavity.com/categories/news/entertainment/feed", cat: "entertainment", color: "#ffaa44" }
-    ];
+    let map, layers = { news: L.layerGroup(), sports: L.layerGroup(), entertainment: L.layerGroup() };
+    let weatherRadar;
 
+    // 2. Initialize Tactical Map
     function initMap() {
-        map = L.map('map', { zoomControl: false }).setView([37.8, -96], 5);
+        map = L.map('map', { zoomControl: false, attributionControl: false }).setView([37.8, -96], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        
-        // Add layers to map initially
         Object.values(layers).forEach(l => l.addTo(map));
+        
+        // Add Live Precipitation Layer (OpenWeatherMap Tiles)
+        weatherRadar = L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=YOUR_API_KEY');
+        
         fetchFeeds();
     }
 
+    // 3. 24-Hour Scan Logic
     async function fetchFeeds() {
+        const SOURCES = [
+            { name: "Atlanta Voice", url: "https://theatlantavoice.com/feed/", cat: "news", color: "#ff4444" },
+            { name: "Black Enterprise", url: "https://www.blackenterprise.com/feed/", cat: "news", color: "#ff4444" },
+            { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", cat: "news", color: "#ff4444" },
+            { name: "Andscape", url: "https://andscape.com/feed", cat: "sports", color: "#44aaff" },
+            { name: "Blavity", url: "https://blavity.com/categories/news/entertainment/feed", cat: "entertainment", color: "#ffaa44" }
+        ];
+
+        let total = 0;
         for (const src of SOURCES) {
             try {
                 const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`);
                 const data = await res.json();
+                
                 data.items.forEach(item => {
-                    const coords = spotCity(item.title + " " + item.description);
-                    if (coords) createPin(item, coords, src);
+                    const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
+                    
+                    // REQUIREMENT: Only stories posted in the past 24 hours
+                    if (hoursOld <= 24) {
+                        const coords = deepScanLocation(item.title + " " + item.description);
+                        if (coords) {
+                            createTacticalPin(item, coords, src);
+                            total++;
+                        }
+                    }
                 });
             } catch (e) { console.error(src.name); }
         }
-        document.getElementById('stats').innerText = "Signal Locked. Diagnostic Green.";
+        document.getElementById('status').innerText = `SCAN COMPLETE: ${total} RECENT SIGNALS LOCATED.`;
     }
 
-    function spotCity(text) {
-        const t = text.toLowerCase();
-        for (const [city, coord] of Object.entries(CITY_COORDS)) {
-            if (t.includes(city)) return coord;
+    // 4. "Deep Scan" for City Mentions
+    function deepScanLocation(text) {
+        const content = text.toLowerCase();
+        for (const [city, coord] of Object.entries(GEODATA)) {
+            if (content.includes(city)) return coord;
         }
         return null;
     }
 
-    function createPin(item, coords, src) {
-        // Create custom colored circle marker
+    function createTacticalPin(item, coords, src) {
         const marker = L.circleMarker(coords, {
-            radius: 8, fillColor: src.color, color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8
-        });
+            radius: 9, fillColor: src.color, color: "#fff", weight: 2, fillOpacity: 0.9
+        }).addTo(layers[src.cat]);
 
         const popup = `
-            <div style="min-width:200px">
-                <strong style="color:${src.color}">${src.name}</strong><br>
-                <a href="${item.link}" target="_blank" style="color:#fff; text-decoration:none; font-weight:bold;">${item.title}</a>
+            <div style="min-width:220px; font-family:Inter;">
+                <div style="font-size:0.6rem; color:${src.color}; font-weight:800; margin-bottom:4px;">${src.name.toUpperCase()}</div>
+                <a href="${item.link}" target="_blank" class="popup-link">${item.title}</a>
+                <p style="font-size:0.75rem; color:#aaa; margin:8px 0 0 0;">${item.description.replace(/<[^>]*>?/gm, '').substring(0, 100)}...</p>
             </div>
         `;
-        marker.bindPopup(popup).addTo(layers[src.cat]);
+        marker.bindPopup(popup);
     }
 
     function toggleLayer(type) {
         if (map.hasLayer(layers[type])) map.removeLayer(layers[type]);
         else map.addLayer(layers[type]);
+    }
+
+    function toggleWeather() {
+        if (map.hasLayer(weatherRadar)) map.removeLayer(weatherRadar);
+        else weatherRadar.addTo(map);
     }
 
     initMap();
