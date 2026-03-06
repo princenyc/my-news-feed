@@ -57,6 +57,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+    // 1. Data Definitions
     const GEODATA = {
         "atlanta": [33.7490, -84.3880], "the a": [33.7490, -84.3880],
         "chicago": [41.8781, -87.6298], "detroit": [42.3314, -83.0458],
@@ -66,36 +67,50 @@
         "nyc": [40.7128, -74.0060], "dc": [38.9072, -77.0369]
     };
 
-    let map, layers = { news: L.layerGroup(), sports: L.layerGroup(), entertainment: L.layerGroup() };
-    let weatherRadar;
+    const SOURCES = [
+        { name: "Capital B", url: "https://capitalbnews.org/feed/", cat: "news", color: "#ff4444" },
+        { name: "Atlanta Voice", url: "https://theatlantavoice.com/feed/", cat: "news", color: "#ff4444" },
+        { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", cat: "news", color: "#ff4444" },
+        { name: "Black Enterprise", url: "https://www.blackenterprise.com/feed/", cat: "news", color: "#ff4444" },
+        { name: "Andscape", url: "https://andscape.com/feed", cat: "sports", color: "#44aaff" },
+        { name: "UrbanGeekz", url: "https://urbangeekz.com/feed/", cat: "news", color: "#00ffcc" },
+        { name: "Blavity", url: "https://blavity.com/categories/news/entertainment/feed", cat: "entertainment", color: "#ffaa44" }
+    ];
+
+    let map, weatherRadar;
+    // Categories mapped to Leaflet LayerGroups
+    let layers = { 
+        news: L.layerGroup(), 
+        sports: L.layerGroup(), 
+        entertainment: L.layerGroup() 
+    };
 
     function initMap() {
         map = L.map('map', { zoomControl: false, attributionControl: false }).setView([37.8, -96], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        Object.values(layers).forEach(l => l.addTo(map));
+        
+        // Add all layers to map initially
+        layers.news.addTo(map);
+        layers.sports.addTo(map);
+        layers.entertainment.addTo(map);
+        
         weatherRadar = L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=YOUR_API_KEY');
         fetchFeeds();
     }
 
     async function fetchFeeds() {
-        const SOURCES = [
-            { name: "Capital B", url: "https://capitalbnews.org/feed/", cat: "news", color: "#ff4444" },
-            { name: "Atlanta Voice", url: "https://theatlantavoice.com/feed/", cat: "news", color: "#ff4444" },
-            { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", cat: "news", color: "#ff4444" },
-            { name: "Andscape", url: "https://andscape.com/feed", cat: "sports", color: "#44aaff" },
-            { name: "Blavity", url: "https://blavity.com/categories/news/entertainment/feed", cat: "entertainment", color: "#ffaa44" }
-        ];
-
         let located = 0, national = 0;
         document.getElementById('national-feed').innerHTML = "";
 
         for (const src of SOURCES) {
             try {
+                // Use RSS2JSON for clean parsing
                 const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`);
                 const data = await res.json();
                 
                 data.items.forEach(item => {
                     const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
+                    // Strict 24-hour limit
                     if (hoursOld <= 24) {
                         const coords = deepScan(item.title + " " + item.description);
                         if (coords) {
@@ -107,7 +122,7 @@
                         }
                     }
                 });
-            } catch (e) { console.error(src.name); }
+            } catch (e) { console.error("Source Failed: " + src.name); }
         }
         document.getElementById('status').innerText = `LOCATED: ${located} | NATIONAL: ${national}`;
     }
@@ -122,16 +137,28 @@
 
     function createPin(item, coords, src) {
         const jitter = () => (Math.random() - 0.5) * 0.15; 
+        
+        // Funnel marker into the specific category layer
         const marker = L.circleMarker([coords[0] + jitter(), coords[1] + jitter()], {
-            radius: 10, fillColor: src.color, color: "#fff", weight: 2, fillOpacity: 0.9
-        }).addTo(layers[src.cat]);
+            radius: 10, 
+            fillColor: src.color, 
+            color: "#fff", 
+            weight: 2, 
+            fillOpacity: 0.9
+        }).addTo(layers[src.cat]); // This line fixes the filtering!
 
-        marker.bindPopup(`<div style="min-width:180px;"><a href="${item.link}" target="_blank" style="color:${src.color}; font-weight:bold; text-decoration:none;">${item.title}</a></div>`);
+        marker.bindPopup(`
+            <div style="min-width:180px; font-family:Inter;">
+                <span style="font-size:0.6rem; color:${src.color}; font-weight:800;">${src.name.toUpperCase()}</span>
+                <h4 style="margin:5px 0;"><a href="${item.link}" target="_blank" style="color:#ff3e3e; text-decoration:none;">${item.title}</a></h4>
+            </div>
+        `);
     }
 
     function createCard(item, src) {
         const card = document.createElement('div');
-        card.className = 'story-card';
+        // Add a class for category filtering in the sidebar later
+        card.className = `story-card category-${src.cat}`; 
         card.innerHTML = `
             <div class="source-tag" style="background:${src.color}">${src.name}</div>
             <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
@@ -140,10 +167,21 @@
         document.getElementById('national-feed').appendChild(card);
     }
 
-    function toggleLayer(t) { map.hasLayer(layers[t]) ? map.removeLayer(layers[t]) : layers[t].addTo(map); }
-    function toggleWeather() { map.hasLayer(weatherRadar) ? map.removeLayer(weatherRadar) : weatherRadar.addTo(map); }
+    // Toggle logic for the HUD buttons
+    function toggleLayer(t) {
+        if (map.hasLayer(layers[t])) {
+            map.removeLayer(layers[t]);
+            // Optional: Hide sidebar stories for this category too
+            document.querySelectorAll(`.category-${t}`).forEach(el => el.style.display = 'none');
+        } else {
+            map.addLayer(layers[t]);
+            document.querySelectorAll(`.category-${t}`).forEach(el => el.style.display = 'block');
+        }
+    }
+
+    function toggleWeather() {
+        map.hasLayer(weatherRadar) ? map.removeLayer(weatherRadar) : weatherRadar.addTo(map);
+    }
 
     initMap();
 </script>
-</body>
-</html>
