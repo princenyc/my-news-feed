@@ -56,14 +56,21 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     // 1. Comprehensive City Database for "Deep Scan"
-    const GEODATA = {
-        "atlanta": [33.7490, -84.3880], "chicago": [41.8781, -87.6298], "detroit": [42.3314, -83.0458],
-        "baltimore": [39.2904, -76.6122], "philly": [39.9526, -75.1652], "philadelphia": [39.9526, -75.1652],
-        "houston": [29.7604, -95.3698], "new orleans": [29.9511, -90.0715], "harlem": [40.8116, -73.9465],
-        "brooklyn": [40.6782, -73.9442], "dc": [38.9072, -77.0369], "washington": [38.9072, -77.0369],
-        "oakland": [37.8044, -122.2712], "memphis": [35.1495, -90.0490], "st. louis": [38.6270, -90.1994],
-        "miami": [25.7617, -80.1918], "los angeles": [34.0522, -118.2437], "birmingham": [33.5186, -86.8104]
-    };
+   const GEODATA = {
+    // Top 2026 Black Population Hubs
+    "new york": [40.7128, -74.0060], "atlanta": [33.7490, -84.3880], "chicago": [41.8781, -87.6298],
+    "dc": [38.9072, -77.0369], "philadelphia": [39.9526, -75.1652], "miami": [25.7617, -80.1918],
+    "houston": [29.7604, -95.3698], "detroit": [42.3314, -83.0458], "dallas": [32.7767, -96.7970],
+    "los angeles": [34.0522, -118.2437], "baltimore": [39.2904, -76.6122], "memphis": [35.1495, -90.0490],
+    "st. louis": [38.6270, -90.1994], "charlotte": [35.2271, -80.8431], "cleveland": [41.4993, -81.6944],
+    "new orleans": [29.9511, -90.0715], "richmond": [37.5407, -77.4360], "birmingham": [33.5186, -86.8104],
+    
+    // Emerging & Specialized Hubs
+    "oakland": [37.8044, -122.2712], "columbus": [39.9612, -82.9988], "milwaukee": [43.0389, -87.9065],
+    "nashville": [36.1627, -86.7816], "durham": [35.9940, -78.8986], "jackson": [32.2988, -90.1848],
+    "shreveport": [32.5252, -93.7502], "baton rouge": [30.4515, -91.1871], "hampton": [37.0299, -76.3452],
+    "newark": [40.7357, -74.1724], "brooklyn": [40.6782, -73.9442], "harlem": [40.8116, -73.9465]
+};
 
     let map, layers = { news: L.layerGroup(), sports: L.layerGroup(), entertainment: L.layerGroup() };
     let weatherRadar;
@@ -82,13 +89,27 @@
 
     // 3. 24-Hour Scan Logic
     async function fetchFeeds() {
-        const SOURCES = [
-            { name: "Atlanta Voice", url: "https://theatlantavoice.com/feed/", cat: "news", color: "#ff4444" },
-            { name: "Black Enterprise", url: "https://www.blackenterprise.com/feed/", cat: "news", color: "#ff4444" },
-            { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", cat: "news", color: "#ff4444" },
-            { name: "Andscape", url: "https://andscape.com/feed", cat: "sports", color: "#44aaff" },
-            { name: "Blavity", url: "https://blavity.com/categories/news/entertainment/feed", cat: "entertainment", color: "#ffaa44" }
-        ];
+       const SOURCES = [
+    // === NEWS: INVESTIGATIVE & NONPROFIT ===
+    { name: "Capital B News", url: "https://capitalbnews.org/feed/", cat: "news", color: "#ff4444" },
+    { name: "The AFRO", url: "https://afro.com/feed/", cat: "news", color: "#ff4444" },
+    { name: "Black Agenda Report", url: "https://www.blackagendareport.com/rss.xml", cat: "news", color: "#ff4444" },
+
+    // === NEWS: LOCAL ROOTS (Geographic Focus) ===
+    { name: "Chicago Defender", url: "https://chicagodefender.com/feed/", cat: "news", color: "#ff4444" },
+    { name: "Atlanta Voice", url: "https://theatlantavoice.com/feed/", cat: "news", color: "#ff4444" },
+    { name: "Amsterdam News (NYC)", url: "https://amsterdamnews.com/feed/", cat: "news", color: "#ff4444" },
+    
+    // === TECH & BUSINESS SIGNAL ===
+    { name: "UrbanGeekz", url: "https://urbangeekz.com/feed/", cat: "news", color: "#00ffcc" },
+    { name: "Black Enterprise Tech", url: "https://www.blackenterprise.com/technology/feed/", cat: "news", color: "#00ffcc" },
+    { name: "The Plug", url: "https://tpinsights.com/feed/", cat: "news", color: "#00ffcc" },
+
+    // === SPORTS & CULTURE ===
+    { name: "Andscape", url: "https://andscape.com/feed", cat: "sports", color: "#44aaff" },
+    { name: "Yardbarker Sports", url: "https://www.yardbarker.com/rss/main", cat: "sports", color: "#44aaff" },
+    { name: "Blavity Entertainment", url: "https://blavity.com/categories/news/entertainment/feed", cat: "entertainment", color: "#ffaa44" }
+];
 
         let total = 0;
         for (const src of SOURCES) {
