@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Signal: Hybrid Intelligence v5.0</title>
+    <title>The Signal: Tactical Intelligence v5.1</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --bg: #050505; --accent: #ff3e3e; --news: #ff4444; --sports: #44aaff; --culture: #ffaa44; --mainstream: #ffffff; --panel: rgba(15, 15, 15, 0.9); }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; overflow: hidden; display: flex; }
         
         #map { height: 100vh; flex-grow: 1; background: #000; }
-        .leaflet-tile { filter: brightness(0.25) contrast(1.3) grayscale(1) invert(1) opacity(0.3); }
+        .leaflet-tile { filter: brightness(0.2) contrast(1.4) grayscale(1) invert(1) opacity(0.3); }
 
         /* HUD & Sidebar Layout */
         .hud {
@@ -26,31 +26,32 @@
         h1 { font-size: 1.2rem; color: var(--accent); letter-spacing: 2px; margin: 0; text-transform: uppercase; }
         .status-bar { font-size: 0.6rem; color: #0f0; margin: 5px 0 15px 0; font-family: monospace; border-bottom: 1px solid #333; padding-bottom: 10px; }
         
-        .filter-item { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 0.7rem; font-weight: 700; cursor: pointer; opacity: 0.8; }
+        /* Fixed Filter Visibility */
+        .filter-item { 
+            display: flex; align-items: center; gap: 10px; margin-top: 12px; 
+            font-size: 0.7rem; font-weight: 700; cursor: pointer; 
+            padding: 8px; border-radius: 6px; border: 1px solid transparent;
+            opacity: 0.4; transition: 0.3s;
+        }
+        .filter-item.active { opacity: 1; border-color: #444; background: rgba(255,255,255,0.05); }
         .dot { height: 8px; width: 8px; border-radius: 50%; }
 
-        /* Story Cards */
-        .story-card { background: #151515; border: 1px solid #222; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid transparent; }
+        .story-card { background: #151515; border: 1px solid #222; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid transparent; transition: 0.3s; }
         .story-card h3 { font-size: 0.9rem; margin: 0 0 8px 0; line-height: 1.3; }
         .story-card a { color: #fff; text-decoration: none; font-weight: 700; }
-        .story-card a:hover { color: var(--accent); }
         .source-tag { font-size: 0.55rem; font-weight: 900; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; display: inline-block; color: #000; }
     </style>
 </head>
 <body>
 
     <div class="hud">
-        <h1>The Signal v5.0</h1>
-        <div class="status-bar" id="status">INITIALIZING HYBRID SCAN...</div>
+        <h1>The Signal v5.1</h1>
+        <div class="status-bar" id="status">SYNCING COMMAND CHANNELS...</div>
         
-        <div class="filter-item" onclick="toggleLayer('news')"><div class="dot" style="background:var(--news)"></div> COMMUNITY NEWS</div>
-        <div class="filter-item" onclick="toggleLayer('mainstream')"><div class="dot" style="background:var(--mainstream)"></div> IMPACT (AP/NPR)</div>
-        <div class="filter-item" onclick="toggleLayer('sports')"><div class="dot" style="background:var(--sports)"></div> SPORTS & LABOR</div>
-        <div class="filter-item" onclick="toggleLayer('entertainment')"><div class="dot" style="background:var(--culture)"></div> CULTURE & ARTS</div>
-        
-        <div style="margin-top:20px; font-size:0.6rem; color:#666; line-height:1.4;">
-            <b>LOGIC:</b> Community feeds are Priority Alpha. Mainstream feeds filtered by 18 Impact Words.
-        </div>
+        <div id="btn-news" class="filter-item active" onclick="toggleLayer('news')"><div class="dot" style="background:var(--news)"></div> COMMUNITY NEWS</div>
+        <div id="btn-mainstream" class="filter-item active" onclick="toggleLayer('mainstream')"><div class="dot" style="background:var(--mainstream)"></div> IMPACT (AP/NPR)</div>
+        <div id="btn-sports" class="filter-item active" onclick="toggleLayer('sports')"><div class="dot" style="background:var(--sports)"></div> SPORTS & LABOR</div>
+        <div id="btn-entertainment" class="filter-item active" onclick="toggleLayer('entertainment')"><div class="dot" style="background:var(--culture)"></div> CULTURE & ARTS</div>
     </div>
 
     <div id="map"></div>
@@ -62,27 +63,14 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // 1. Expanded Geographic Intelligence
-    const GEODATA = {
-        "atlanta": [33.7490, -84.3880], "chicago": [41.8781, -87.6298], "detroit": [42.3314, -83.0458],
-        "baltimore": [39.2904, -76.6122], "philly": [39.9526, -75.1652], "nola": [29.9511, -90.0715],
-        "nyc": [40.7128, -74.0060], "dc": [38.9072, -77.0369], "harlem": [40.8116, -73.9465],
-        // State-Level Centroids
-        "georgia": [32.1656, -82.9001], "alabama": [32.3182, -86.9023], "mississippi": [32.7416, -89.6787],
-        "louisiana": [30.9843, -91.9623], "florida": [27.6648, -81.5158], "texas": [31.9686, -99.9018],
-        "north carolina": [35.7596, -79.0193], "virginia": [37.4316, -78.6569], "tennessee": [35.5175, -86.5804]
-    };
-
-    // 2. Tactical Filtering
-    const IMPACT_WORDS = ["policy", "legislation", "federal", "DEI", "supreme court", "voting", "reparations", "wealth gap", "civil rights", "racial", "homeownership", "investment", "racist", "reform", "justice", "equity", "labor", "education"];
-
+    // 1. Core Config
+    const GEODATA = { "atlanta": [33.7490, -84.3880], "chicago": [41.8781, -87.6298], "detroit": [42.3314, -83.0458], "baltimore": [39.2904, -76.6122], "philly": [39.9526, -75.1652], "nyc": [40.7128, -74.0060], "dc": [38.9072, -77.0369], "georgia": [32.1656, -82.9001], "texas": [31.9686, -99.9018] };
+    const IMPACT_WORDS = ["policy", "legislation", "federal", "court", "voting", "reparations", "wealth gap", "civil rights", "innovation", "investment", "capital", "reform", "justice", "equity", "labor", "leadership"];
     const SOURCES = [
         { name: "Capital B", url: "https://capitalbnews.org/feed/", cat: "news", color: "#ff4444" },
         { name: "Atlanta Voice", url: "https://theatlantavoice.com/feed/", cat: "news", color: "#ff4444" },
-        { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", cat: "news", color: "#ff4444" },
         { name: "Andscape", url: "https://andscape.com/feed", cat: "sports", color: "#44aaff" },
         { name: "Blavity", url: "https://blavity.com/categories/news/entertainment/feed", cat: "entertainment", color: "#ffaa44" },
-        // Mainstream Hybrid Feed
         { name: "AP News", url: "https://news.google.com/rss/search?q=when:24h+AP+News", cat: "mainstream", color: "#ffffff" },
         { name: "NPR", url: "https://feeds.npr.org/1001/rss.xml", cat: "mainstream", color: "#ffffff" }
     ];
@@ -97,82 +85,61 @@
     }
 
     async function fetchFeeds() {
-        let located = 0, filtered = 0;
+        let located = 0, national = 0;
         document.getElementById('national-feed').innerHTML = "";
-
         for (const src of SOURCES) {
             try {
                 const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`);
                 const data = await res.json();
-                
                 data.items.forEach(item => {
                     const content = (item.title + " " + item.description).toLowerCase();
                     const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
-
-                    // 1. Time Check: 24h only
                     if (hoursOld <= 24) {
-                        // 2. Mainstream Filter logic
-                        const isMainstream = (src.cat === "mainstream");
-                        const hasImpact = IMPACT_WORDS.some(word => content.includes(word.toLowerCase()));
-
-                        if (isMainstream && !hasImpact) return; // Drop irrelevant mainstream news
-
+                        // Impact Filter
+                        if (src.cat === "mainstream" && !IMPACT_WORDS.some(w => content.includes(w))) return;
+                        
                         const coords = deepScan(content);
-                        if (coords) {
-                            createPin(item, coords, src);
-                            located++;
-                        } else {
-                            createCard(item, src);
-                            filtered++;
-                        }
+                        if (coords) { createPin(item, coords, src); located++; } 
+                        else { createCard(item, src); national++; }
                     }
                 });
-            } catch (e) { console.warn("Sync Error: " + src.name); }
+            } catch (e) { console.warn("Failed: " + src.name); }
         }
-        document.getElementById('status').innerText = `LOCATED: ${located} | SYSTEMIC: ${filtered}`;
+        document.getElementById('status').innerText = `LOCATED: ${located} | SYSTEMIC: ${national}`;
     }
 
     function deepScan(text) {
-        for (const [key, coord] of Object.entries(GEODATA)) {
-            if (text.includes(key)) return coord;
-        }
+        for (const [key, coord] of Object.entries(GEODATA)) { if (text.includes(key)) return coord; }
         return null;
     }
 
     function createPin(item, coords, src) {
-        const jitter = () => (Math.random() - 0.5) * 0.18; 
-        const marker = L.circleMarker([coords[0] + jitter(), coords[1] + jitter()], {
-            radius: 10, fillColor: src.color, color: "#fff", weight: 2, fillOpacity: 0.9
-        }).addTo(layers[src.cat]);
-
-        marker.bindPopup(`<div style="min-width:180px; color:#fff;">
-            <div style="font-size:0.6rem; color:${src.color}; font-weight:900;">${src.name.toUpperCase()}</div>
-            <h4 style="margin:5px 0;"><a href="${item.link}" target="_blank" style="color:#ff3e3e; text-decoration:none;">${item.title}</a></h4>
-        </div>`);
+        const jitter = () => (Math.random() - 0.5) * 0.15; // Anti-stacking jitter
+        L.circleMarker([coords[0] + jitter(), coords[1] + jitter()], { radius: 10, fillColor: src.color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(layers[src.cat])
+        .bindPopup(`<div style="min-width:180px; color:#fff;"><div style="font-size:0.6rem; color:${src.color}; font-weight:900;">${src.name.toUpperCase()}</div><h4 style="margin:5px 0;"><a href="${item.link}" target="_blank" style="color:#ff3e3e; text-decoration:none;">${item.title}</a></h4></div>`);
     }
 
     function createCard(item, src) {
         const card = document.createElement('div');
-        card.className = `story-card category-${src.cat}`; 
+        card.className = `story-card category-${src.cat}`; // Funnel card into a filterable class
         card.style.borderLeftColor = src.color;
-        card.innerHTML = `
-            <div class="source-tag" style="background:${src.color}">${src.name}</div>
-            <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
-            <p style="font-size:0.7rem; color:#777; margin:0;">${item.description.replace(/<[^>]*>?/gm, '').substring(0, 90)}...</p>
-        `;
+        card.innerHTML = `<div class="source-tag" style="background:${src.color}">${src.name}</div><h3><a href="${item.link}" target="_blank">${item.title}</a></h3><p style="font-size:0.7rem; color:#777; margin:0;">${item.description.replace(/<[^>]*>?/gm, '').substring(0, 80)}...</p>`;
         document.getElementById('national-feed').appendChild(card);
     }
 
+    // Fixed Toggle Logic
     function toggleLayer(t) {
+        const btn = document.getElementById(`btn-${t}`);
         if (map.hasLayer(layers[t])) {
             map.removeLayer(layers[t]);
-            document.querySelectorAll(`.category-${t}`).forEach(el => el.style.display = 'none');
+            btn.classList.remove('active'); // Visual Feedback: Off
+            document.querySelectorAll(`.category-${t}`).forEach(el => el.style.display = 'none'); // Sidebar Sync
         } else {
             layers[t].addTo(map);
-            document.querySelectorAll(`.category-${t}`).forEach(el => el.style.display = 'block');
+            btn.classList.add('active'); // Visual Feedback: On
+            document.querySelectorAll(`.category-${t}`).forEach(el => el.style.display = 'block'); // Sidebar Sync
         }
     }
-
     initMap();
 </script>
 </body>
