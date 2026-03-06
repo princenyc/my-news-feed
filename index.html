@@ -3,151 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Signal: Geographic Intelligence v4.1</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Georgia&display=swap" rel="stylesheet">
+    <title>The Signal: GEOINT Command v4.2</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --bg: #F0EEE9; --text: #141414; --accent: #d44; --card: #ffffff; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; }
+        :root { --bg: #0a0a0a; --text: #e0e0e0; --accent: #d44; --panel: #1a1a1a; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; overflow: hidden; }
         
-        /* Expanded Map Container */
-        #map { height: 750px; width: 100%; border-radius: 20px; margin-bottom: 30px; border: 2px solid #000; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 1; }
-        .leaflet-tile { filter: grayscale(1) invert(1) opacity(0.15); } /* High-Contrast 2026 Style */
+        /* Map Command Center */
+        #map { height: 100vh; width: 100vw; z-index: 1; }
+        .leaflet-tile { filter: brightness(0.4) contrast(1.2) grayscale(1) invert(1); } 
 
-        .header { text-align: center; margin-bottom: 20px; }
-        h1 { font-family: 'Georgia', serif; font-variant: small-caps; font-size: 3.5rem; margin: 0; }
-        #feed-title { font-weight: 800; text-transform: uppercase; margin-top: 40px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-        #feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; margin-top: 20px; }
-        .article { background: var(--card); border-radius: 20px; padding: 25px; border: 1px solid rgba(0,0,0,0.05); }
-        footer { margin-top: 50px; padding: 30px; background: rgba(0,0,0,0.05); border-radius: 10px; font-family: monospace; }
+        /* Floating Intelligence Panel */
+        .control-panel {
+            position: absolute; top: 20px; left: 20px; width: 320px; z-index: 1000;
+            background: var(--panel); border: 1px solid #333; border-radius: 12px;
+            padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+        h1 { font-size: 1.5rem; margin: 0 0 5px 0; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
+        .layer-toggle { display: flex; align-items: center; gap: 10px; margin-top: 15px; font-size: 0.8rem; font-weight: 800; cursor: pointer; }
+        .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; }
+
+        /* Custom Popup Styling */
+        .leaflet-popup-content-wrapper { background: #1a1a1a; color: white; border: 1px solid #444; }
+        .leaflet-popup-tip { background: #1a1a1a; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header"><h1>The Signal</h1><p><i>Geospatial Intelligence Dashboard</i></p></div>
-        
-        <div id="map"></div>
 
-        <h2 id="feed-title">Global Signal Feed</h2>
-        <div id="feed"></div>
+    <div class="control-panel">
+        <h1>The Signal</h1>
+        <p style="font-size: 0.7rem; color: #888; margin-bottom: 20px;">Geospatial Community Intelligence</p>
+        
+        <div class="layer-toggle" onclick="toggleLayer('news')"><span class="dot" style="background: #ff4444;"></span> NEWS & JUSTICE</div>
+        <div class="layer-toggle" onclick="toggleLayer('sports')"><span class="dot" style="background: #44aaff;"></span> SPORTS & LABOR</div>
+        <div class="layer-toggle" onclick="toggleLayer('entertainment')"><span class="dot" style="background: #ffaa44;"></span> CULTURE & ARTS</div>
+        <div class="layer-toggle" onclick="toggleWeather()"><span class="dot" style="background: #ffffff;"></span> WEATHER OVERLAY</div>
+        
+        <div id="stats" style="margin-top: 30px; font-size: 0.7rem; opacity: 0.5;">
+            Syncing Global Signal...
+        </div>
     </div>
-    <footer><div id="debug-text">Initializing Advanced Layers...</div></footer>
+
+    <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // 1. Core Map & Layer Configuration
-    let map;
-    const categoryLayers = {
-        "News": L.layerGroup(),
-        "Sports": L.layerGroup(),
-        "Entertainment": L.layerGroup()
-    };
+    let map, layers = { news: L.layerGroup(), sports: L.layerGroup(), entertainment: L.layerGroup() };
+    let weatherLayer = L.tileLayer('https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=YOUR_API_KEY'); // Placeholder
 
     const CITY_COORDS = {
         "atlanta": [33.7490, -84.3880], "chicago": [41.8781, -87.6298], "detroit": [42.3314, -83.0458],
         "baltimore": [39.2904, -76.6122], "philly": [39.9526, -75.1652], "houston": [29.7604, -95.3698],
-        "new orleans": [29.9511, -90.0715], "harlem": [40.8116, -73.9465], "dc": [38.9072, -77.0369],
-        "oakland": [37.8044, -122.2712], "memphis": [35.1495, -90.0490], "brooklyn": [40.6782, -73.9442]
+        "new orleans": [29.9511, -90.0715], "harlem": [40.8116, -73.9465], "dc": [38.9072, -77.0369]
     };
 
     const SOURCES = [
-        { name: "The Atlanta Voice", url: "https://theatlantavoice.com/feed/", tier: 300, category: "news" },
-        { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300, category: "news" },
-        { name: "Chicago Defender", url: "https://chicagodefender.com/feed/", tier: 300, category: "news" },
-        { name: "Kareem Abdul-Jabbar", url: "https://kareem.substack.com/feed", tier: 300, category: "news" },
-        { name: "Andscape", url: "https://andscape.com/feed", tier: 300, category: "sports" },
-        { name: "Blavity Entertainment", url: "https://blavity.com/categories/news/entertainment/feed", tier: 280, category: "entertainment" }
+        { name: "Atlanta Voice", url: "https://theatlantavoice.com/feed/", cat: "news", color: "#ff4444" },
+        { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", cat: "news", color: "#ff4444" },
+        { name: "Andscape", url: "https://andscape.com/feed", cat: "sports", color: "#44aaff" },
+        { name: "Blavity Entertainment", url: "https://blavity.com/categories/news/entertainment/feed", cat: "entertainment", color: "#ffaa44" }
     ];
 
-    let allArticles = [];
-
     function initMap() {
-        // Initialize at higher zoom for the 750px height
-        map = L.map('map').setView([37.8, -96], 4.5);
+        map = L.map('map', { zoomControl: false }).setView([37.8, -96], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-        // Add Layer Control
-        const overlays = {
-            "News Stories": categoryLayers.News,
-            "Sports Signals": categoryLayers.Sports,
-            "Culture Hits": categoryLayers.Entertainment
-        };
-        L.control.layers(null, overlays).addTo(map);
-
-        // Display all by default
-        categoryLayers.News.addTo(map);
-        categoryLayers.Sports.addTo(map);
-        categoryLayers.Entertainment.addTo(map);
+        
+        // Add layers to map initially
+        Object.values(layers).forEach(l => l.addTo(map));
+        fetchFeeds();
     }
 
-    function getCoords(text) {
-        const lower = text.toLowerCase();
+    async function fetchFeeds() {
+        for (const src of SOURCES) {
+            try {
+                const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`);
+                const data = await res.json();
+                data.items.forEach(item => {
+                    const coords = spotCity(item.title + " " + item.description);
+                    if (coords) createPin(item, coords, src);
+                });
+            } catch (e) { console.error(src.name); }
+        }
+        document.getElementById('stats').innerText = "Signal Locked. Diagnostic Green.";
+    }
+
+    function spotCity(text) {
+        const t = text.toLowerCase();
         for (const [city, coord] of Object.entries(CITY_COORDS)) {
-            if (lower.includes(city)) return coord;
+            if (t.includes(city)) return coord;
         }
         return null;
     }
 
-    async function fetchFeeds() {
-        const debug = document.getElementById('debug-text');
-        allArticles = [];
-        const fetchPromises = SOURCES.map(async (src) => {
-            try {
-                const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`);
-                const data = await res.json();
-                if(data.status === "ok") {
-                    data.items.forEach(item => {
-                        const coords = getCoords(item.title + " " + item.description);
-                        allArticles.push({ ...item, source: src.name, category: src.category, coords });
-                    });
-                }
-            } catch (e) { console.warn(src.name + " failed"); }
+    function createPin(item, coords, src) {
+        // Create custom colored circle marker
+        const marker = L.circleMarker(coords, {
+            radius: 8, fillColor: src.color, color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8
         });
-        await Promise.allSettled(fetchPromises);
-        debug.innerText = `World Monitor Live: Layers Populated.`;
-        renderFeed();
+
+        const popup = `
+            <div style="min-width:200px">
+                <strong style="color:${src.color}">${src.name}</strong><br>
+                <a href="${item.link}" target="_blank" style="color:#fff; text-decoration:none; font-weight:bold;">${item.title}</a>
+            </div>
+        `;
+        marker.bindPopup(popup).addTo(layers[src.cat]);
     }
 
-    function renderFeed() {
-        const container = document.getElementById('feed');
-        container.innerHTML = "";
-        
-        // Clear all layers before repopulating
-        Object.values(categoryLayers).forEach(layer => layer.clearLayers());
-
-        allArticles.forEach(post => {
-            if (post.coords) {
-                // Determine category layer
-                let layerKey = "News";
-                if(post.category === "sports") layerKey = "Sports";
-                if(post.category === "entertainment") layerKey = "Entertainment";
-
-                // Bind Popup with Headline Link
-                const popupContent = `
-                    <div style="font-family:Inter; padding:5px;">
-                        <span style="font-size:0.7rem; color:#888; font-weight:800; text-transform:uppercase;">${post.source}</span>
-                        <h4 style="margin:5px 0;"><a href="${post.link}" target="_blank" style="color:#d44; text-decoration:none;">${post.title}</a></h4>
-                        <p style="font-size:0.8rem; margin:0;">${post.description.replace(/<[^>]*>?/gm, '').substring(0, 80)}...</p>
-                    </div>
-                `;
-                L.marker(post.coords).addTo(categoryLayers[layerKey]).bindPopup(popupContent);
-            }
-
-            // Also keep the list below for quick scrolling
-            const div = document.createElement('div');
-            div.className = 'article';
-            div.innerHTML = `
-                <div class="meta">${post.source} ${post.coords ? '📍 Spotted' : ''}</div>
-                <h2><a href="${post.link}" target="_blank" style="color:inherit; text-decoration:none;">${post.title}</a></h2>
-                <p>${post.description.replace(/<[^>]*>?/gm, '').substring(0, 120)}...</p>
-            `;
-            container.appendChild(div);
-        });
+    function toggleLayer(type) {
+        if (map.hasLayer(layers[type])) map.removeLayer(layers[type]);
+        else map.addLayer(layers[type]);
     }
 
     initMap();
-    fetchFeeds();
 </script>
 </body>
 </html>
