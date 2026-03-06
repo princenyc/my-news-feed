@@ -3,39 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Signal: Master Edition 3.1</title>
+    <title>The Signal: World Monitor 4.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Georgia&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --bg: #F0EEE9; --text: #141414; --accent: #d44; --card: #ffffff; --border-radius: 20px; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.4; transition: 0.3s; }
+        :root { --bg: #F0EEE9; --text: #141414; --accent: #d44; --card: #ffffff; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
-        .ticker-wrap { background: #000; color: #fff; padding: 12px; border-radius: 12px; margin-bottom: 20px; overflow: hidden; font-size: 0.8rem; text-transform: uppercase; font-weight: bold; min-height: 40px; display: flex; align-items: center; }
-        .ticker { display: inline-block; animation: marquee 60s linear infinite; white-space: nowrap; }
-        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
-        .header { text-align: center; margin-bottom: 40px; }
-        h1 { font-family: 'Georgia', serif; font-variant: small-caps; font-size: 3.5rem; margin: 0; letter-spacing: -1px; }
+        
+        /* Map Styling */
+        #map { height: 500px; width: 100%; border-radius: 20px; margin-bottom: 30px; border: 2px solid #000; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 1; }
+        .leaflet-tile { filter: grayscale(1) invert(1) opacity(0.2); } /* Minimalist 2026 Map Style */
+
+        .header { text-align: center; margin-bottom: 30px; }
+        h1 { font-family: 'Georgia', serif; font-variant: small-caps; font-size: 3rem; margin: 0; }
         .tab-nav { display: flex; gap: 10px; margin-bottom: 30px; justify-content: center; }
-        .tab-btn { background: var(--card); border: 1px solid transparent; color: var(--text); padding: 12px 28px; border-radius: 30px; cursor: pointer; font-weight: 600; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .tab-btn.active { background: var(--accent); color: white; transform: scale(1.05); }
-        #searchBar { width: 100%; max-width: 600px; display: block; margin: 0 auto 40px auto; padding: 15px 25px; border-radius: 30px; border: 1px solid rgba(0,0,0,0.1); background: var(--card); color: var(--text); font-size: 1rem; outline: none; }
+        .tab-btn { background: var(--card); border: 1px solid #ddd; padding: 12px 28px; border-radius: 30px; cursor: pointer; font-weight: 600; }
+        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
         #feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
-        .article { background: var(--card); border-radius: var(--border-radius); padding: 30px; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); transition: 0.3s; position: relative; }
-        .article:hover { transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
-        .article.high-impact { grid-column: span 2; border-left: 5px solid var(--accent); }
-        .meta { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .article h2 { font-family: 'Georgia', serif; font-size: 1.65rem; margin: 0 0 15px 0; line-height: 1.2; font-weight: 700; }
-        .article a { color: inherit; text-decoration: none; }
-        .article a:hover { color: var(--accent); }
-        .impact-badge { background: var(--accent); color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; }
-        footer { margin-top: 80px; padding: 60px 20px; border-top: 1px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.02); }
-        #debug-panel { margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.05); border-radius: 10px; font-family: monospace; font-size: 0.75rem; border: 1px solid rgba(0,0,0,0.1); }
+        .article { background: var(--card); border-radius: 20px; padding: 25px; border: 1px solid rgba(0,0,0,0.05); }
+        .meta { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 10px; }
+        footer { margin-top: 50px; padding: 30px; background: rgba(0,0,0,0.05); border-radius: 10px; font-family: monospace; font-size: 0.75rem; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="ticker-wrap"><div class="ticker" id="ticker-content">Priority Loading Active...</div></div>
-        <div class="header"><h1>The Signal</h1><p><i>Cultural Intelligence </i></p></div>
-        <input type="text" id="searchBar" placeholder="Search current signals..." onkeyup="renderFeed()">
+        <div class="header"><h1>The Signal</h1><p><i>Geospatial Intelligence for the Black Community</i></p></div>
+        
+        <div id="map"></div>
+
         <div class="tab-nav">
             <button class="tab-btn active" onclick="switchCategory('news', this)">Top News</button>
             <button class="tab-btn" onclick="switchCategory('sports', this)">Sports</button>
@@ -43,126 +39,91 @@
         </div>
         <div id="feed"></div>
     </div>
-    <footer>
-        <div id="debug-panel"><b>Diagnostics:</b> <span id="debug-text">Initializing master engine...</span></div>
-        <div style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 30px; max-width: 1200px; margin: 0 auto;">
-             <h4>Active Signal Sources</h4>
-             <ul id="source-list" style="columns: 2; font-size: 0.8rem; opacity: 0.7; list-style: none; padding: 0;"></ul>
-        </div>
-    </footer>
+    <footer><div id="debug-text">Initializing Geospatial Engine...</div></footer>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    const IMPACT_WORDS = ["supreme court", "DEI", "diversity", "policy","VC funding", "capital", "generational wealth", "investment", "reform", "justice", "executive order", "advocacy", "equity", "labor", "leadership", "legislation", "federal", "voting", "reparations", "wealth gap", "civil rights", "innovation", "homeownership"];
-    
+    // 1. Map Configuration
+    let map, markers = [];
+    const CITY_COORDS = {
+        "atlanta": [33.7490, -84.3880], "chicago": [41.8781, -87.6298], "detroit": [42.3314, -83.0458],
+        "baltimore": [39.2904, -76.6122], "philly": [39.9526, -75.1652], "houston": [29.7604, -95.3698],
+        "new orleans": [29.9511, -90.0715], "harlem": [40.8116, -73.9465], "dc": [38.9072, -77.0369],
+        "oakland": [37.8044, -122.2712], "memphis": [35.1495, -90.0490], "brooklyn": [40.6782, -73.9442]
+    };
+
     const SOURCES = [
-        // === LOCAL SIGNALS: NYC ===
-       { name: "The City (NYC Investigative)", url: "https://www.thecity.nyc/rss/index.xml", tier: 270, category: "news" },
-       { name: "Amsterdam News (NYC)", url: "https://amsterdamnews.com/feed/", tier: 270, category: "news" },
-
-// === LOCAL SIGNALS: ATLANTA ===
-      { name: "The Atlanta Voice", url: "https://theatlantavoice.com/feed/", tier: 270, category: "news" },
-      { name: "Atlanta Black Star", url: "https://atlantablackstar.com/feed/", tier: 270, category: "news" },
-      { name: "Atlanta Daily World", url: "https://atlantadailyworld.com/feed/", tier: 270, category: "news" },
-
-// === LOCAL SIGNALS: CHICAGO ===
-        { name: "Chicago Defender", url: "https://chicagodefender.com/feed/", tier: 270, category: "news" },
-        { name: "Chicago Crusader", url: "https://chicagocrusader.com/feed/", tier: 270, category: "news" },
-        
-        { name: "Kareem Abdul-Jabbar", url: "https://kareem.substack.com/feed", tier: 300, category: "news" },
-        { name: "Ta-Nehisi Coates", url: "https://ta-nehisicoates.substack.com/feed", tier: 300, category: "news" },
-        { name: "Don Lemon", url: "https://donlemon.substack.com/feed", tier: 300, category: "news" },
-        { name: "W. Kamau Bell", url: "https://wkamau.substack.com/feed", tier: 250, category: "news" },
-        { name: "The Intersection (T. Johnson)", url: "https://theintersection.substack.com/feed", tier: 250, category: "news" },
-        { name: "NPR News", url: "https://feeds.npr.org/1001/rss.xml", tier: 240, category: "news" },
-        { name: "Associated Press", url: "https://news.google.com/rss/search?q=when:48h+AP+News&hl=en-US&gl=US&ceid=US:en", tier: 240, category: "news" },
-        { name: "The Plug (Tech)", url: "https://tpinsights.com/feed", tier: 250, category: "news" },
-        { name: "Sherrell Dorsey", url: "https://sherrelldorsey.substack.com/feed", tier: 250, category: "news" },
-        { name: "NYT: Race & Ethnicity", url: "https://www.nytimes.com/svc/collections/v1/publish/https://www.nytimes.com/topic/subject/race-and-ethnicity/rss.xml", tier: 300, category: "news" },
-        { name: "Politico Picks", url: "https://www.politico.com/rss/politicopicks.xml", tier: 250, category: "news" },
-        { name: "Black Enterprise", url: "https://www.blackenterprise.com/feed/", tier: 300, category: "news" },
-        { name: "The AFRO", url: "https://afro.com/feed/", tier: 300, category: "news" },
+        { name: "The Atlanta Voice", url: "https://theatlantavoice.com/feed/", tier: 300, category: "news" },
         { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", tier: 300, category: "news" },
-        { name: "The Root", url: "https://theroot.com/rss", tier: 220, category: "news" },
+        { name: "Chicago Defender", url: "https://chicagodefender.com/feed/", tier: 300, category: "news" },
+        { name: "Kareem Abdul-Jabbar", url: "https://kareem.substack.com/feed", tier: 300, category: "news" },
         { name: "Andscape", url: "https://andscape.com/feed", tier: 300, category: "sports" },
-        { name: "The Shadow League", url: "https://theshadowleague.com/feed", tier: 300, category: "sports" },
-        { name: "HBCU Gameday", url: "https://hbcugameday.com/feed", tier: 300, category: "sports" },
-        { name: "Total Pro Sports", url: "https://www.totalprosports.com/feed/", tier: 250, category: "sports" },
-        { name: "The Athletic (NYT)", url: "https://news.google.com/rss/search?q=when:48h+site:theathletic.com&hl=en-US&gl=US&ceid=US:en", tier: 280, category: "sports" },
-        { name: "Yardbarker", url: "https://www.yardbarker.com/rss/main", tier: 250, category: "sports" },
-        { name: "Deadspin", url: "https://deadspin.com/rss", tier: 250, category: "sports" },
-        { name: "Variety", url: "https://variety.com/feed/", tier: 200, category: "entertainment" },
-        { name: "The Hollywood Reporter", url: "https://hollywoodreporter.com/feed", tier: 200, category: "entertainment" },
-        { name: "Blavity Entertainment", url: "https://blavity.com/categories/news/entertainment/feed", tier: 280, category: "entertainment" },
-        { name: "Essence", url: "https://www.essence.com/feed/", tier: 220, category: "entertainment" },
-        { name: "theJasmineBrand", url: "https://thejasminebrand.com/feed/", tier: 250, category: "entertainment" },
-        { name: "The Shade Room", url: "https://theshaderoom.com/feed/", tier: 250, category: "entertainment" }
+        { name: "Blavity Entertainment", url: "https://blavity.com/categories/news/entertainment/feed", tier: 280, category: "entertainment" }
     ];
 
-    let currentCategory = 'news';
-    let allArticles = [];
-    let syncedCount = 0;
+    let allArticles = [], currentCategory = 'news';
 
-    function getRelativeTime(pubDate) {
-        if (!pubDate) return "";
-        const diff = new Date() - new Date(pubDate);
-        const mins = Math.floor(diff / 60000);
-        const hrs = Math.floor(mins / 60);
-        if (mins < 60) return `${mins}m ago`;
-        if (hrs < 24) return `${hrs}h ago`;
-        return new Date(pubDate).toLocaleDateString();
+    // 2. City Spotter Logic
+    function getCoords(text) {
+        const lower = text.toLowerCase();
+        for (const [city, coord] of Object.entries(CITY_COORDS)) {
+            if (lower.includes(city)) return coord;
+        }
+        return null;
     }
 
-    function calculateReadTime(text) {
-        const words = (text || "").replace(/<[^>]*>?/gm, '').split(/\s+/).length;
-        const mins = Math.ceil(words / 200);
-        return mins <= 1 ? '1m read' : `${mins}m read`;
-    }
-
-    function calculateScore(item, tier, content) {
-        let score = tier;
-        const pubDate = new Date(item.pubDate);
-        const hoursOld = (new Date() - pubDate) / 3600000;
-        if (hoursOld < 12) score += 500;
-        score -= (hoursOld * 5); 
-        if (IMPACT_WORDS.some(word => content.includes(word))) score += 300;
-        if (hoursOld > 48) score -= 500;
-        return Math.floor(score);
+    function initMap() {
+        map = L.map('map').setView([37.8, -96], 4);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     }
 
     async function fetchFeeds() {
         const debug = document.getElementById('debug-text');
-        
+        allArticles = [];
         const fetchPromises = SOURCES.map(async (src) => {
             try {
-                const proxy = "https://api.rss2json.com/v1/api.json?rss_url=";
-                const res = await fetch(proxy + encodeURIComponent(src.url));
+                const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`);
                 const data = await res.json();
                 if(data.status === "ok") {
-                    syncedCount++;
                     data.items.forEach(item => {
-                        const content = ((item.title || "") + " " + (item.description || "")).toLowerCase();
-                        allArticles.push({ 
-                            ...item, 
-                            source: src.name, 
-                            score: calculateScore(item, src.tier, content), 
-                            category: src.category 
-                        });
+                        const coords = getCoords(item.title + " " + item.description);
+                        allArticles.push({ ...item, source: src.name, category: src.category, coords });
                     });
-                    debug.innerText = `Synced ${syncedCount} of ${SOURCES.length} sources.`;
                 }
-            } catch (e) { console.warn(src.name + " failed to load"); }
+            } catch (e) { console.warn(src.name + " failed"); }
         });
-
         await Promise.allSettled(fetchPromises);
+        debug.innerText = `World Monitor Live: ${allArticles.length} signals detected.`;
         renderFeed();
     }
 
-    function init() {
-        const listEl = document.getElementById('source-list');
-        [...new Set(SOURCES.map(s => s.name))].sort().forEach(name => {
-            const li = document.createElement('li'); li.innerText = `• ${name}`; listEl.appendChild(li);
+    function renderFeed() {
+        const container = document.getElementById('feed');
+        container.innerHTML = "";
+        
+        // Clear old markers
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+
+        const filtered = allArticles.filter(a => a.category === currentCategory).slice(0, 20);
+
+        filtered.forEach(post => {
+            // Add Map Marker if city spotted
+            if (post.coords) {
+                const m = L.marker(post.coords).addTo(map)
+                    .bindPopup(`<b>${post.source}</b><br>${post.title}`);
+                markers.push(m);
+            }
+
+            const div = document.createElement('div');
+            div.className = 'article';
+            div.innerHTML = `
+                <div class="meta">${post.source} ${post.coords ? '📍 Spotted' : ''}</div>
+                <h2><a href="${post.link}" target="_blank" style="color:inherit; text-decoration:none;">${post.title}</a></h2>
+                <p>${post.description.replace(/<[^>]*>?/gm, '').substring(0, 120)}...</p>
+            `;
+            container.appendChild(div);
         });
-        fetchFeeds();
     }
 
     function switchCategory(cat, el) {
@@ -172,46 +133,8 @@
         renderFeed();
     }
 
-    function renderFeed() {
-        const container = document.getElementById('feed');
-        const searchVal = document.getElementById('searchBar').value.toLowerCase();
-        container.innerHTML = "";
-        const sourceCounts = {}; 
-
-        const filtered = allArticles
-            .filter(a => a.category === currentCategory)
-            .filter(a => (a.title || "").toLowerCase().includes(searchVal))
-            .sort((a,b) => b.score - a.score)
-            .filter(a => {
-                sourceCounts[a.source] = (sourceCounts[a.source] || 0) + 1;
-                return sourceCounts[a.source] <= 2; 
-            })
-            .slice(0, 20);
-
-        if (filtered.length === 0) {
-            container.innerHTML = `<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>Decoding signal...</div>`;
-            return;
-        }
-
-        filtered.forEach(post => {
-            const isImpact = post.score > 600;
-            const readTime = calculateReadTime(post.description);
-            const div = document.createElement('div');
-            div.className = `article ${isImpact ? 'high-impact' : ''}`;
-            div.innerHTML = `
-                <div class="meta"><span>${post.source} • ${readTime}</span><span>${getRelativeTime(post.pubDate)}</span></div>
-                <h2><a href="${post.link}" target="_blank">${post.title || 'Untitled'}</a></h2>
-                <p>${(post.description || "").replace(/<[^>]*>?/gm, '').substring(0, 150)}...</p>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
-                    <span style="font-size: 0.7rem; opacity: 0.5;">Score: ${post.score}</span>
-                    ${isImpact ? '<span class="impact-badge">IMPACT</span>' : ''}
-                </div>
-            `;
-            container.appendChild(div);
-        });
-        document.getElementById('ticker-content').innerHTML = filtered.slice(0, 8).map(p => ` • ${p.title}`).join(' ');
-    }
-    init();
+    initMap();
+    fetchFeeds();
 </script>
 </body>
 </html>
