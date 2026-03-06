@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Signal: Tactical Intelligence v4.6</title>
+    <title>The Signal: Tactical Intelligence v4.7</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --bg: #050505; --accent: #ff3e3e; --news: #ff4444; --sports: #44aaff; --culture: #ffaa44; --panel: rgba(15, 15, 15, 0.9); }
+        :root { --bg: #050505; --accent: #ff3e3e; --news: #ff4444; --sports: #44aaff; --culture: #ffaa44; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; overflow: hidden; display: flex; }
         
         #map { height: 100vh; flex-grow: 1; background: #000; }
@@ -15,12 +15,12 @@
         /* HUD & National Sidebar */
         .hud {
             position: absolute; top: 20px; left: 20px; width: 320px; z-index: 1000;
-            background: var(--panel); border: 1px solid #333; border-radius: 12px;
+            background: rgba(15, 15, 15, 0.9); border: 1px solid #333; border-radius: 12px;
             padding: 20px; backdrop-filter: blur(10px); box-shadow: 0 0 30px rgba(0,0,0,1);
         }
         .national-sidebar {
-            width: 380px; height: 100vh; background: #0a0a0a; border-left: 1px solid #333;
-            overflow-y: auto; padding: 20px; z-index: 1001;
+            width: 400px; height: 100vh; background: #0a0a0a; border-left: 1px solid #333;
+            overflow-y: auto; padding: 25px; z-index: 1001;
         }
         
         h1 { font-size: 1.2rem; color: var(--accent); letter-spacing: 2px; margin: 0; text-transform: uppercase; }
@@ -29,11 +29,10 @@
         .filter-item { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 0.7rem; font-weight: 700; cursor: pointer; opacity: 0.8; }
         .dot { height: 8px; width: 8px; border-radius: 50%; }
 
-        /* National Story Cards */
-        .story-card { background: #151515; border: 1px solid #222; border-radius: 8px; padding: 15px; margin-bottom: 15px; transition: 0.2s; }
-        .story-card:hover { border-color: #444; background: #1a1a1a; }
+        /* Story Cards */
+        .story-card { background: #151515; border: 1px solid #222; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
         .story-card h3 { font-size: 0.9rem; margin: 0 0 8px 0; line-height: 1.3; }
-        .story-card a { color: #fff; text-decoration: none; }
+        .story-card a { color: #fff; text-decoration: none; font-weight: 700; }
         .story-card a:hover { color: var(--accent); }
         .source-tag { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; display: inline-block; }
     </style>
@@ -43,31 +42,28 @@
     <div class="hud">
         <h1>The Signal</h1>
         <div class="status-bar" id="status">SCANNING FREQUENCIES...</div>
-        
         <div class="filter-item" onclick="toggleLayer('news')"><div class="dot" style="background:var(--news)"></div> NEWS & POLICY</div>
         <div class="filter-item" onclick="toggleLayer('sports')"><div class="dot" style="background:var(--sports)"></div> SPORTS & LABOR</div>
-        <div class="filter-item" onclick="toggleLayer('entertainment')"><div class="dot" style="background:var(--culture)"></div> CULTURE & ARTS</div>
-        <div class="filter-item" onclick="toggleWeather()"><div class="dot" style="background:#fff"></div> WEATHER RADAR</div>
+        <div class="filter-item" onclick="toggleLayer('entertainment')"><div class="dot" style="background:var(--culture)"></div> CULTURE & ENTERTAINMENT</div>
+        <div class="filter-item" onclick="toggleWeather()"><div class="dot" style="background:#fff"></div> WEATHER RADAR (LIVE)</div>
     </div>
 
     <div id="map"></div>
 
     <div class="national-sidebar">
-        <h2 style="font-size: 0.8rem; letter-spacing: 1px; color: #888; text-transform: uppercase; margin-bottom: 20px;">National News Feed</h2>
+        <h2 style="font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">National Intel Feed</h2>
         <div id="national-feed"></div>
     </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // 1. Expanded City Deep Scan
     const GEODATA = {
         "atlanta": [33.7490, -84.3880], "the a": [33.7490, -84.3880],
-        "chicago": [41.8781, -87.6298], "chi-town": [41.8781, -87.6298],
-        "detroit": [42.3314, -83.0458], "motor city": [42.3314, -83.0458],
-        "baltimore": [39.2904, -76.6122], "philly": [39.9526, -75.1652], "philadelphia": [39.9526, -75.1652],
-        "houston": [29.7604, -95.3698], "new orleans": [29.9511, -90.0715], "nola": [29.9511, -90.0715],
-        "harlem": [40.8116, -73.9465], "brooklyn": [40.6782, -73.9442], "nyc": [40.7128, -74.0060],
-        "dc": [38.9072, -77.0369], "washington": [38.9072, -77.0369], "dmv": [38.9072, -77.0369]
+        "chicago": [41.8781, -87.6298], "detroit": [42.3314, -83.0458],
+        "baltimore": [39.2904, -76.6122], "philly": [39.9526, -75.1652],
+        "houston": [29.7604, -95.3698], "new orleans": [29.9511, -90.0715],
+        "harlem": [40.8116, -73.9465], "brooklyn": [40.6782, -73.9442],
+        "nyc": [40.7128, -74.0060], "dc": [38.9072, -77.0369]
     };
 
     let map, layers = { news: L.layerGroup(), sports: L.layerGroup(), entertainment: L.layerGroup() };
@@ -86,16 +82,12 @@
             { name: "Capital B", url: "https://capitalbnews.org/feed/", cat: "news", color: "#ff4444" },
             { name: "Atlanta Voice", url: "https://theatlantavoice.com/feed/", cat: "news", color: "#ff4444" },
             { name: "Amsterdam News", url: "https://amsterdamnews.com/feed/", cat: "news", color: "#ff4444" },
-            { name: "Black Enterprise", url: "https://www.blackenterprise.com/feed/", cat: "news", color: "#ff4444" },
             { name: "Andscape", url: "https://andscape.com/feed", cat: "sports", color: "#44aaff" },
-            { name: "UrbanGeekz", url: "https://urbangeekz.com/feed/", cat: "news", color: "#00ffcc" },
             { name: "Blavity", url: "https://blavity.com/categories/news/entertainment/feed", cat: "entertainment", color: "#ffaa44" }
         ];
 
-        let locatedCount = 0;
-        let nationalCount = 0;
-        const nationalFeed = document.getElementById('national-feed');
-        nationalFeed.innerHTML = "";
+        let located = 0, national = 0;
+        document.getElementById('national-feed').innerHTML = "";
 
         for (const src of SOURCES) {
             try {
@@ -105,22 +97,22 @@
                 data.items.forEach(item => {
                     const hoursOld = (new Date() - new Date(item.pubDate)) / 3600000;
                     if (hoursOld <= 24) {
-                        const coords = deepScanLocation(item.title + " " + item.description);
+                        const coords = deepScan(item.title + " " + item.description);
                         if (coords) {
-                            createTacticalPin(item, coords, src);
-                            locatedCount++;
+                            createPin(item, coords, src);
+                            located++;
                         } else {
-                            createNationalCard(item, src);
-                            nationalCount++;
+                            createCard(item, src);
+                            national++;
                         }
                     }
                 });
-            } catch (e) { console.error(src.name + " error"); }
+            } catch (e) { console.error(src.name); }
         }
-        document.getElementById('status').innerText = `LOCATED: ${locatedCount} | NATIONAL: ${nationalCount}`;
+        document.getElementById('status').innerText = `LOCATED: ${located} | NATIONAL: ${national}`;
     }
 
-    function deepScanLocation(text) {
+    function deepScan(text) {
         const content = text.toLowerCase();
         for (const [city, coord] of Object.entries(GEODATA)) {
             if (content.includes(city)) return coord;
@@ -128,43 +120,28 @@
         return null;
     }
 
-    function createTacticalPin(item, coords, src) {
-        // "The Spider" Jitter: Tiny random offset so overlapping pins bloom
-        const jitter = () => (Math.random() - 0.5) * 0.12; 
-        const adjustedCoords = [coords[0] + jitter(), coords[1] + jitter()];
-
-        const marker = L.circleMarker(adjustedCoords, {
+    function createPin(item, coords, src) {
+        const jitter = () => (Math.random() - 0.5) * 0.15; 
+        const marker = L.circleMarker([coords[0] + jitter(), coords[1] + jitter()], {
             radius: 10, fillColor: src.color, color: "#fff", weight: 2, fillOpacity: 0.9
         }).addTo(layers[src.cat]);
 
-        marker.bindPopup(`
-            <div style="min-width:200px; color:#fff;">
-                <div style="font-size:0.6rem; color:${src.color}; font-weight:800;">${src.name.toUpperCase()}</div>
-                <h4 style="margin:5px 0;"><a href="${item.link}" target="_blank" style="color:#ff3e3e; text-decoration:none;">${item.title}</a></h4>
-            </div>
-        `);
+        marker.bindPopup(`<div style="min-width:180px;"><a href="${item.link}" target="_blank" style="color:${src.color}; font-weight:bold; text-decoration:none;">${item.title}</a></div>`);
     }
 
-    function createNationalCard(item, src) {
+    function createCard(item, src) {
         const card = document.createElement('div');
         card.className = 'story-card';
         card.innerHTML = `
             <div class="source-tag" style="background:${src.color}">${src.name}</div>
             <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
-            <p style="font-size:0.75rem; color:#888; margin:0;">${item.description.replace(/<[^>]*>?/gm, '').substring(0, 90)}...</p>
+            <p style="font-size:0.7rem; color:#666; margin:0;">${item.description.replace(/<[^>]*>?/gm, '').substring(0, 80)}...</p>
         `;
         document.getElementById('national-feed').appendChild(card);
     }
 
-    function toggleLayer(type) {
-        if (map.hasLayer(layers[type])) map.removeLayer(layers[type]);
-        else map.addLayer(layers[type]);
-    }
-
-    function toggleWeather() {
-        if (map.hasLayer(weatherRadar)) map.removeLayer(weatherRadar);
-        else weatherRadar.addTo(map);
-    }
+    function toggleLayer(t) { map.hasLayer(layers[t]) ? map.removeLayer(layers[t]) : layers[t].addTo(map); }
+    function toggleWeather() { map.hasLayer(weatherRadar) ? map.removeLayer(weatherRadar) : weatherRadar.addTo(map); }
 
     initMap();
 </script>
