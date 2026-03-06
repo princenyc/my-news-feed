@@ -124,4 +124,52 @@
 
     function deepScan(text) {
         const content = text.toLowerCase();
-        for (const [city, coord] of Object.
+        for (const [city, coord] of Object.entries(GEODATA)) {
+            if (content.includes(city)) return coord;
+        }
+        return null;
+    }
+
+    function createPin(item, coords, src) {
+        // "The Spider" Jitter logic for blooming clusters
+        const jitter = () => (Math.random() - 0.5) * 0.15; 
+        const marker = L.circleMarker([coords[0] + jitter(), coords[1] + jitter()], {
+            radius: 10, fillColor: src.color, color: "#fff", weight: 2, fillOpacity: 0.9
+        }).addTo(layers[src.cat]);
+
+        marker.bindPopup(`<div style="min-width:180px; font-family:Inter; color:#fff;">
+            <div style="font-size:0.6rem; color:${src.color}; font-weight:800; margin-bottom:4px;">${src.name.toUpperCase()}</div>
+            <a href="${item.link}" target="_blank" style="color:#ff3e3e; font-weight:bold; text-decoration:none;">${item.title}</a>
+        </div>`);
+    }
+
+    function createCard(item, src) {
+        const card = document.createElement('div');
+        card.className = `story-card category-${src.cat}`; 
+        card.innerHTML = `
+            <div class="source-tag" style="background:${src.color}">${src.name}</div>
+            <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
+            <p style="font-size:0.7rem; color:#666; margin:0;">${item.description.replace(/<[^>]*>?/gm, '').substring(0, 80)}...</p>
+        `;
+        document.getElementById('national-feed').appendChild(card);
+    }
+
+    // Toggle logic for HUD and Sidebar sync
+    function toggleLayer(t) {
+        if (map.hasLayer(layers[t])) {
+            map.removeLayer(layers[t]);
+            document.querySelectorAll(`.category-${t}`).forEach(el => el.style.display = 'none');
+        } else {
+            map.addLayer(layers[t]);
+            document.querySelectorAll(`.category-${t}`).forEach(el => el.style.display = 'block');
+        }
+    }
+
+    function toggleWeather() {
+        map.hasLayer(weatherRadar) ? map.removeLayer(weatherRadar) : weatherRadar.addTo(map);
+    }
+
+    initMap();
+</script>
+</body>
+</html>
