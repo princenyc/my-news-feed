@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Signal v6</title>
+    <title>The Signal v7</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
@@ -17,6 +17,7 @@
             --accent: #ff3030;
             --news: #ff3030;
             --sports: #3a9fff;
+            --hbcu: #00e5a0;
             --culture: #f5a623;
             --mainstream: #aaaaaa;
             --text: #e8e8e8;
@@ -49,22 +50,11 @@
         .leaflet-popup-content { font-size: 0.8rem; line-height: 1.5; }
         .leaflet-popup-content a { color: var(--accent); text-decoration: none; font-weight: 600; }
 
-        /* Cluster overrides */
-        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
-            background: rgba(255,48,48,0.15) !important;
-        }
-        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
-            background: rgba(255,48,48,0.5) !important;
-            color: #fff !important;
-            font-family: 'Space Mono', monospace !important;
-            font-size: 0.6rem !important;
-        }
-
         /* ── HUD ── */
         .hud {
             position: absolute;
             top: 20px; left: 20px;
-            width: 260px;
+            width: 265px;
             z-index: 1000;
             background: var(--panel);
             border: 1px solid var(--border);
@@ -83,22 +73,33 @@
 
         .hud-sub {
             font-family: 'Space Mono', monospace;
-            font-size: 0.55rem;
+            font-size: 0.52rem;
             color: #0f0;
             margin: 6px 0 14px;
             border-bottom: 1px solid var(--border);
             padding-bottom: 10px;
-            line-height: 1.6;
+            line-height: 1.7;
+        }
+
+        .hud-section-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.48rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 12px;
+            margin-bottom: 2px;
+            padding-left: 2px;
         }
 
         .filter-item {
             display: flex; align-items: center; gap: 10px;
-            margin-top: 10px;
+            margin-top: 6px;
             font-family: 'Space Mono', monospace;
-            font-size: 0.62rem;
+            font-size: 0.6rem;
             font-weight: 700;
             cursor: pointer;
-            padding: 8px 10px;
+            padding: 7px 10px;
             border-radius: 6px;
             border: 1px solid transparent;
             opacity: 0.35;
@@ -155,23 +156,25 @@
             display: flex;
             gap: 0;
             margin-top: 12px;
+            flex-wrap: wrap;
+            gap: 2px;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 6px 4px;
+            min-width: fit-content;
+            padding: 6px 6px;
             background: transparent;
             border: 1px solid var(--border);
             color: var(--muted);
             font-family: 'Space Mono', monospace;
-            font-size: 0.52rem;
+            font-size: 0.48rem;
             font-weight: 700;
             cursor: pointer;
             letter-spacing: 0.5px;
             transition: all 0.2s;
+            border-radius: 3px;
         }
-        .tab-btn:first-child { border-radius: 4px 0 0 4px; }
-        .tab-btn:last-child { border-radius: 0 4px 4px 0; }
         .tab-btn.active { background: rgba(255,255,255,0.08); color: var(--text); border-color: rgba(255,255,255,0.15); }
 
         .sidebar-feed {
@@ -228,7 +231,6 @@
             line-height: 1.5;
         }
 
-        /* ── ERROR / LOADING ── */
         .feed-status {
             font-family: 'Space Mono', monospace;
             font-size: 0.6rem;
@@ -236,29 +238,24 @@
             text-align: center;
             padding: 20px;
         }
-
-        .error-tag {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.55rem;
-            color: #ff6b6b;
-            padding: 3px 8px;
-            background: rgba(255,48,48,0.08);
-            border: 1px solid rgba(255,48,48,0.2);
-            border-radius: 4px;
-            margin-bottom: 6px;
-            display: inline-block;
-        }
     </style>
 </head>
 <body>
 
 <div class="hud">
-    <div class="hud-title">The Signal</div>
+    <div class="hud-title">The Signal <span style="font-size:0.7rem; color:#555; font-family:'Space Mono',monospace;">v7</span></div>
     <div class="hud-sub" id="status">INITIALIZING FEEDS...</div>
+
+    <div class="hud-section-label">Coverage Layers</div>
     <div id="btn-news"          class="filter-item active" onclick="toggleLayer('news')">        <div class="dot" style="background:var(--news)"></div> COMMUNITY NEWS</div>
     <div id="btn-mainstream"    class="filter-item active" onclick="toggleLayer('mainstream')">  <div class="dot" style="background:var(--mainstream)"></div> IMPACT (AP/NPR)</div>
-    <div id="btn-sports"        class="filter-item active" onclick="toggleLayer('sports')">      <div class="dot" style="background:var(--sports)"></div> SPORTS & LABOR</div>
     <div id="btn-entertainment" class="filter-item active" onclick="toggleLayer('entertainment')"><div class="dot" style="background:var(--culture)"></div> CULTURE & ARTS</div>
+
+    <div class="hud-section-label" style="margin-top:14px;">Sports Layers</div>
+    <div id="btn-sports"        class="filter-item active" onclick="toggleLayer('sports')">      <div class="dot" style="background:var(--sports)"></div> SPORTS & LABOR</div>
+    <div id="btn-hbcu"          class="filter-item active" onclick="toggleLayer('hbcu')">        <div class="dot" style="background:var(--hbcu)"></div> HBCU ATHLETICS</div>
+    <div id="btn-citysports"    class="filter-item active" onclick="toggleLayer('citysports')">  <div class="dot" style="background:#c084fc"></div> CITY SPORTS</div>
+
     <button class="refresh-btn" onclick="refreshFeeds()">↻ REFRESH</button>
 </div>
 
@@ -268,11 +265,13 @@
     <div class="sidebar-header">
         <h2>Systemic Intelligence — National</h2>
         <div class="sidebar-tabs">
-            <button class="tab-btn active" onclick="switchTab('all', this)">ALL</button>
-            <button class="tab-btn" onclick="switchTab('news', this)">NEWS</button>
-            <button class="tab-btn" onclick="switchTab('mainstream', this)">IMPACT</button>
-            <button class="tab-btn" onclick="switchTab('sports', this)">SPORTS</button>
-            <button class="tab-btn" onclick="switchTab('entertainment', this)">CULTURE</button>
+            <button class="tab-btn active"  onclick="switchTab('all', this)">ALL</button>
+            <button class="tab-btn"         onclick="switchTab('news', this)">NEWS</button>
+            <button class="tab-btn"         onclick="switchTab('mainstream', this)">IMPACT</button>
+            <button class="tab-btn"         onclick="switchTab('sports', this)">SPORTS</button>
+            <button class="tab-btn"         onclick="switchTab('hbcu', this)">HBCU</button>
+            <button class="tab-btn"         onclick="switchTab('citysports', this)">CITIES</button>
+            <button class="tab-btn"         onclick="switchTab('entertainment', this)">CULTURE</button>
         </div>
     </div>
     <div class="sidebar-feed" id="national-feed">
@@ -284,7 +283,7 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 
-// ── GEO: sorted longest-first to prevent short keys shadowing longer ones ──
+// ── GEO: sorted longest-first ──
 const GEODATA_RAW = {
     "washington dc": [38.9072, -77.0369],
     "los angeles":   [34.0522, -118.2437],
@@ -313,6 +312,12 @@ const GEODATA_RAW = {
     "harlem":        [40.8116, -73.9465],
     "bronx":         [40.8448, -73.8648],
     "brooklyn":      [40.6782, -73.9442],
+    "nashville":     [36.1627, -86.7816],
+    "norfolk":       [36.8508, -76.2859],
+    "durham":        [35.9940, -78.8986],
+    "raleigh":       [35.7796, -78.6382],
+    "jackson":       [32.2988, -90.1848],
+    "baton rouge":   [30.4515, -91.1871],
     "georgia":       [32.1656, -82.9001],
     "alabama":       [32.3617, -86.2792],
     "florida":       [27.9944, -81.7603],
@@ -320,6 +325,10 @@ const GEODATA_RAW = {
     "ohio":          [40.4173, -82.9071],
     "louisiana":     [30.9843, -91.9623],
     "virginia":      [37.4316, -78.6569],
+    "tennessee":     [35.5175, -86.5804],
+    "mississippi":   [32.3547, -89.3985],
+    "north carolina":[35.6301, -79.8064],
+    "south carolina":[33.8361, -81.1637],
     "the a":         [33.7490, -84.3880],
     "dmv":           [38.9072, -77.0369],
     "nola":          [29.9511, -90.0715],
@@ -328,7 +337,6 @@ const GEODATA_RAW = {
     "dc":            [38.9072, -77.0369],
 };
 
-// Sort by key length descending so "los angeles" matches before "la"
 const GEODATA = Object.entries(GEODATA_RAW).sort((a, b) => b[0].length - a[0].length);
 
 const IMPACT_WORDS = ["policy","legislation","federal","court","voting","reparations","wealth gap",
@@ -336,70 +344,112 @@ const IMPACT_WORDS = ["policy","legislation","federal","court","voting","reparat
     "labor","leadership","housing","election","tech","protest","prison","police",
     "discrimination","settlement","ruling","supreme court","congress","senate","bill","law"];
 
+// Sports signal words — filter city sports to labor/equity angle, not pure scores
+const SPORTS_SIGNAL = ["contract","trade","protest","labor","union","salary","arrested","suspended",
+    "racism","discrimination","activism","donate","foundation","community","charged","lawsuit",
+    "fine","grievance","extension","release","sign","draft","owner","deal","negotiate"];
+
+// ── CITY SPORTS: Google News RSS per city, filtered to signal not scores ──
+// Format: q= targets teams + signal words
+const CITY_SPORTS_SOURCES = [
+    { name: "ATL Sports",  city: "atlanta",       color: "#c084fc",
+      url: `https://news.google.com/rss/search?q=Atlanta+Hawks+OR+"Atlanta+Falcons"+OR+"Atlanta+Braves"+labor+OR+contract+OR+protest+OR+community+OR+racism&hl=en-US&gl=US&ceid=US:en` },
+    { name: "CHI Sports",  city: "chicago",       color: "#c084fc",
+      url: `https://news.google.com/rss/search?q=Chicago+Bulls+OR+"Chicago+Bears"+OR+"Chicago+Sky"+labor+OR+contract+OR+protest+OR+community+OR+racism&hl=en-US&gl=US&ceid=US:en` },
+    { name: "DET Sports",  city: "detroit",       color: "#c084fc",
+      url: `https://news.google.com/rss/search?q=Detroit+Pistons+OR+"Detroit+Lions"+labor+OR+contract+OR+protest+OR+community+OR+racism&hl=en-US&gl=US&ceid=US:en` },
+    { name: "BAL Sports",  city: "baltimore",     color: "#c084fc",
+      url: `https://news.google.com/rss/search?q=Baltimore+Ravens+OR+"Baltimore+Orioles"+labor+OR+contract+OR+protest+OR+community+OR+racism&hl=en-US&gl=US&ceid=US:en` },
+    { name: "HOU Sports",  city: "houston",       color: "#c084fc",
+      url: `https://news.google.com/rss/search?q=Houston+Rockets+OR+"Houston+Texans"+labor+OR+contract+OR+protest+OR+community+OR+racism&hl=en-US&gl=US&ceid=US:en` },
+    { name: "MEM Sports",  city: "memphis",       color: "#c084fc",
+      url: `https://news.google.com/rss/search?q="Memphis+Grizzlies"+labor+OR+contract+OR+protest+OR+community+OR+racism&hl=en-US&gl=US&ceid=US:en` },
+    { name: "MIA Sports",  city: "miami",         color: "#c084fc",
+      url: `https://news.google.com/rss/search?q="Miami+Heat"+OR+"Miami+Dolphins"+labor+OR+contract+OR+protest+OR+community+OR+racism&hl=en-US&gl=US&ceid=US:en` },
+    { name: "NYC Sports",  city: "nyc",           color: "#c084fc",
+      url: `https://news.google.com/rss/search?q="New+York+Knicks"+OR+"New+York+Liberty"+OR+"New+York+Giants"+labor+OR+contract+OR+protest+OR+community+OR+racism&hl=en-US&gl=US&ceid=US:en` },
+    { name: "OAK Sports",  city: "oakland",       color: "#c084fc",
+      url: `https://news.google.com/rss/search?q="Golden+State+Warriors"+OR+"Oakland+Athletics"+labor+OR+contract+OR+protest+OR+community+OR+racism&hl=en-US&gl=US&ceid=US:en` },
+    { name: "DC Sports",   city: "dc",            color: "#c084fc",
+      url: `https://news.google.com/rss/search?q="Washington+Commanders"+OR+"Washington+Wizards"+OR+"Washington+Mystics"+labor+OR+contract+OR+protest+OR+community+OR+racism&hl=en-US&gl=US&ceid=US:en` },
+];
+
+// ── MAIN SOURCES ──
 const SOURCES = [
     // Community News
-    { name: "Capital B",        url: "https://capitalbnews.org/feed/",                                      cat: "news",          color: "#ff3030" },
-    { name: "The Root",         url: "https://www.theroot.com/rss",                                         cat: "news",          color: "#ff3030" },
-    { name: "Black Enterprise", url: "https://www.blackenterprise.com/feed/",                               cat: "news",          color: "#ff3030" },
-    { name: "Atlanta Voice",    url: "https://theatlantavoice.com/feed/",                                   cat: "news",          color: "#ff3030" },
-    { name: "Blavity",          url: "https://blavity.com/feed",                                            cat: "news",          color: "#ff3030" },
-    { name: "Chicago Defender", url: "https://chicagodefender.com/feed/",                                   cat: "news",          color: "#ff3030" },
-    { name: "Michigan Chronicle",url:"https://michiganchronicle.com/feed/",                                 cat: "news",          color: "#ff3030" },
-    { name: "Afro Baltimore",   url: "https://afro.com/feed/",                                              cat: "news",          color: "#ff3030" },
-    { name: "Houston Forward Times", url: "https://forwardtimes.com/feed/",                                 cat: "news",          color: "#ff3030" },
-    // Mainstream (filtered by IMPACT_WORDS)
-    { name: "NPR",              url: "https://feeds.npr.org/1001/rss.xml",                                  cat: "mainstream",    color: "#aaaaaa" },
-    { name: "AP News",          url: "https://news.google.com/rss/search?q=when:24h+racial+equity+OR+civil+rights+OR+Black+Americans", cat: "mainstream", color: "#aaaaaa" },
-    { name: "ProPublica",       url: "https://www.propublica.org/feeds/propublica/main",                    cat: "mainstream",    color: "#aaaaaa" },
-    { name: "Marshall Project", url: "https://feeds.themarshallproject.org/marshall-project-all",           cat: "mainstream",    color: "#aaaaaa" },
-    // Sports
-    { name: "Andscape",         url: "https://andscape.com/feed",                                          cat: "sports",        color: "#3a9fff" },
-    { name: "The Undefeated",   url: "https://theundefeated.com/feed/",                                    cat: "sports",        color: "#3a9fff" },
-    // Culture / Entertainment
-    { name: "Essence",          url: "https://www.essence.com/feed/",                                      cat: "entertainment", color: "#f5a623" },
-    { name: "Vibe",             url: "https://www.vibe.com/feed/",                                         cat: "entertainment", color: "#f5a623" },
-    { name: "theJasmineBrand",  url: "https://thejasminebrand.com/feed/",                                  cat: "entertainment", color: "#f5a623" },
-    { name: "Okayplayer",       url: "https://www.okayplayer.com/feed",                                    cat: "entertainment", color: "#f5a623" },
+    { name: "Capital B",          url: "https://capitalbnews.org/feed/",                                       cat: "news",          color: "#ff3030" },
+    { name: "The Root",           url: "https://www.theroot.com/rss",                                          cat: "news",          color: "#ff3030" },
+    { name: "Black Enterprise",   url: "https://www.blackenterprise.com/feed/",                                cat: "news",          color: "#ff3030" },
+    { name: "Atlanta Voice",      url: "https://theatlantavoice.com/feed/",                                    cat: "news",          color: "#ff3030" },
+    { name: "Blavity",            url: "https://blavity.com/feed",                                             cat: "news",          color: "#ff3030" },
+    { name: "Chicago Defender",   url: "https://chicagodefender.com/feed/",                                    cat: "news",          color: "#ff3030" },
+    { name: "Michigan Chronicle", url: "https://michiganchronicle.com/feed/",                                  cat: "news",          color: "#ff3030" },
+    { name: "Afro Baltimore",     url: "https://afro.com/feed/",                                               cat: "news",          color: "#ff3030" },
+    { name: "Houston Fwd Times",  url: "https://forwardtimes.com/feed/",                                       cat: "news",          color: "#ff3030" },
+    // Mainstream
+    { name: "NPR",                url: "https://feeds.npr.org/1001/rss.xml",                                   cat: "mainstream",    color: "#aaaaaa" },
+    { name: "AP Civil Rights",    url: "https://news.google.com/rss/search?q=when:24h+racial+equity+OR+civil+rights+OR+Black+Americans&hl=en-US&gl=US&ceid=US:en", cat: "mainstream", color: "#aaaaaa" },
+    { name: "ProPublica",         url: "https://www.propublica.org/feeds/propublica/main",                     cat: "mainstream",    color: "#aaaaaa" },
+    { name: "Marshall Project",   url: "https://feeds.themarshallproject.org/marshall-project-all",            cat: "mainstream",    color: "#aaaaaa" },
+    // Sports & Labor
+    { name: "Andscape",           url: "https://andscape.com/feed",                                           cat: "sports",        color: "#3a9fff" },
+    { name: "The Undefeated",     url: "https://theundefeated.com/feed/",                                     cat: "sports",        color: "#3a9fff" },
+    { name: "Players Tribune",    url: "https://www.theplayerstribune.com/feed",                               cat: "sports",        color: "#3a9fff" },
+    { name: "ESPN Black",         url: "https://news.google.com/rss/search?q=ESPN+Black+athlete+OR+NBPA+OR+NFLPA+labor+OR+protest+OR+equity&hl=en-US&gl=US&ceid=US:en", cat: "sports", color: "#3a9fff" },
+    // HBCU
+    { name: "HBCU Gameday",       url: "https://hbcugameday.com/feed/",                                       cat: "hbcu",          color: "#00e5a0" },
+    { name: "HBCU Sports",        url: "https://news.google.com/rss/search?q=HBCU+sports+OR+SWAC+OR+MEAC+OR+"historically+black"+athletics&hl=en-US&gl=US&ceid=US:en", cat: "hbcu", color: "#00e5a0" },
+    { name: "HBCU Buzz",          url: "https://hbcubuzz.com/feed/",                                          cat: "hbcu",          color: "#00e5a0" },
+    // Culture
+    { name: "Essence",            url: "https://www.essence.com/feed/",                                       cat: "entertainment", color: "#f5a623" },
+    { name: "Vibe",               url: "https://www.vibe.com/feed/",                                          cat: "entertainment", color: "#f5a623" },
+    { name: "theJasmineBrand",    url: "https://thejasminebrand.com/feed/",                                   cat: "entertainment", color: "#f5a623" },
+    { name: "Okayplayer",         url: "https://www.okayplayer.com/feed",                                     cat: "entertainment", color: "#f5a623" },
 ];
+
+// Attach city sports with cat tag
+CITY_SPORTS_SOURCES.forEach(s => { s.cat = 'citysports'; });
+const ALL_SOURCES = [...SOURCES, ...CITY_SPORTS_SOURCES];
 
 // ── STATE ──
 let map;
 let clusterGroups = {};
 let activeTab = 'all';
-const seenTitles = new Set(); // dedup tracker
+const seenTitles = new Set();
+
+const CAT_COLORS = {
+    news: '#ff3030', mainstream: '#aaaaaa', sports: '#3a9fff',
+    hbcu: '#00e5a0', citysports: '#c084fc', entertainment: '#f5a623'
+};
 
 // ── MAP INIT ──
 function initMap() {
     map = L.map('map', { zoomControl: false, attributionControl: false }).setView([37.8, -96], 4);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    ['news','sports','entertainment','mainstream'].forEach(cat => {
+    Object.keys(CAT_COLORS).forEach(cat => {
         clusterGroups[cat] = L.markerClusterGroup({
             maxClusterRadius: 50,
-            iconCreateFunction: (cluster) => {
-                const colors = { news:'#ff3030', sports:'#3a9fff', entertainment:'#f5a623', mainstream:'#aaaaaa' };
-                return L.divIcon({
-                    html: `<div style="background:${colors[cat]};color:#000;font-family:'Space Mono',monospace;font-size:0.6rem;font-weight:700;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,0.3)">${cluster.getChildCount()}</div>`,
-                    className: '', iconSize: [32, 32], iconAnchor: [16, 16]
-                });
-            }
+            iconCreateFunction: (cluster) => L.divIcon({
+                html: `<div style="background:${CAT_COLORS[cat]};color:#000;font-family:'Space Mono',monospace;font-size:0.58rem;font-weight:700;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,0.25)">${cluster.getChildCount()}</div>`,
+                className: '', iconSize: [30, 30], iconAnchor: [15, 15]
+            })
         });
         clusterGroups[cat].addTo(map);
     });
 }
 
-// ── DETERMINISTIC JITTER from URL hash ──
+// ── DETERMINISTIC JITTER ──
 function hashJitter(str) {
     let h = 0;
     for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
     return ((h & 0xffff) / 0xffff - 0.5) * 0.3;
 }
 
-// ── GEO SCAN: first match wins (sorted longest key first) ──
+// ── GEO SCAN ──
 function deepScan(text) {
     const lower = text.toLowerCase();
     for (const [key, coord] of GEODATA) {
-        // word-boundary check: key must be surrounded by non-alpha chars
         const idx = lower.indexOf(key);
         if (idx === -1) continue;
         const before = lower[idx - 1];
@@ -411,18 +461,21 @@ function deepScan(text) {
     return null;
 }
 
-// ── DEDUP: normalize title to ~40 char key ──
+// For city sports sources, use known city coords directly
+function cityCoords(cityKey) {
+    return GEODATA_RAW[cityKey] || null;
+}
+
+// ── DEDUP ──
 function dedupKey(title) {
     return title.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 40);
 }
 
-// ── FEED FETCHING (parallel) ──
+// ── FEED FETCHING ──
 async function fetchFeeds() {
     setStatus('SYNCING...');
     seenTitles.clear();
     document.getElementById('national-feed').innerHTML = '<div class="feed-status">Loading...</div>';
-
-    // Clear existing map pins
     Object.values(clusterGroups).forEach(g => g.clearLayers());
 
     const proxy = "https://api.rss2json.com/v1/api.json?rss_url=";
@@ -430,7 +483,7 @@ async function fetchFeeds() {
     let located = 0, national = 0, errors = 0;
 
     const results = await Promise.allSettled(
-        SOURCES.map(src =>
+        ALL_SOURCES.map(src =>
             fetch(proxy + encodeURIComponent(src.url))
                 .then(r => r.json())
                 .then(data => ({ src, data }))
@@ -446,17 +499,26 @@ async function fetchFeeds() {
 
         data.items.forEach(item => {
             const hoursOld = (now - new Date(item.pubDate).getTime()) / 3600000;
-            if (hoursOld > 24) return;
+            if (hoursOld > 36) return; // slightly wider window for HBCU/city sports
 
             const content = (item.title + ' ' + (item.description || '')).toLowerCase();
 
-            // Mainstream filter
+            // Mainstream: impact filter
             if (src.cat === 'mainstream' && !IMPACT_WORDS.some(w => content.includes(w))) return;
+
+            // City sports: signal filter — drop pure score/recap stories
+            if (src.cat === 'citysports' && !SPORTS_SIGNAL.some(w => content.includes(w))) return;
 
             // Dedup
             const key = dedupKey(item.title);
             if (seenTitles.has(key)) return;
             seenTitles.add(key);
+
+            // City sports: pin directly to city, don't need deepScan
+            if (src.cat === 'citysports' && src.city) {
+                const coords = cityCoords(src.city);
+                if (coords) { createPin(item, coords, src); located++; return; }
+            }
 
             const coords = deepScan(content);
             if (coords) {
@@ -474,9 +536,7 @@ async function fetchFeeds() {
     updateTabVisibility();
 }
 
-function setStatus(txt) {
-    document.getElementById('status').innerText = txt;
-}
+function setStatus(txt) { document.getElementById('status').innerText = txt; }
 
 // ── MAP PINS ──
 function createPin(item, coords, src) {
@@ -484,16 +544,16 @@ function createPin(item, coords, src) {
     const jy = hashJitter((item.link || item.title) + '_y');
     const marker = L.circleMarker(
         [coords[0] + jx, coords[1] + jy],
-        { radius: 9, fillColor: src.color, color: 'rgba(255,255,255,0.6)', weight: 1.5, fillOpacity: 0.9 }
+        { radius: 9, fillColor: src.color, color: 'rgba(255,255,255,0.5)', weight: 1.5, fillOpacity: 0.9 }
     );
     const excerpt = (item.description || '').replace(/<[^>]*>?/gm, '').substring(0, 100);
     marker.bindPopup(`
         <div style="min-width:200px; max-width:260px;">
-            <div style="font-size:0.55rem; font-weight:900; text-transform:uppercase; color:${src.color}; margin-bottom:5px;">${src.name}</div>
+            <div style="font-size:0.55rem; font-weight:900; text-transform:uppercase; color:${src.color}; margin-bottom:5px; letter-spacing:1px;">${src.name}</div>
             <div style="font-family:'DM Serif Display',serif; font-size:0.85rem; line-height:1.4; margin-bottom:6px;">
                 <a href="${item.link}" target="_blank" rel="noopener">${item.title}</a>
             </div>
-            <div style="font-size:0.68rem; color:#888;">${excerpt}...</div>
+            <div style="font-size:0.68rem; color:#888; line-height:1.4;">${excerpt}...</div>
         </div>
     `);
     clusterGroups[src.cat].addLayer(marker);
@@ -549,7 +609,6 @@ function refreshFeeds() { fetchFeeds(); }
 // ── BOOT ──
 initMap();
 fetchFeeds();
-
 </script>
 </body>
 </html>
