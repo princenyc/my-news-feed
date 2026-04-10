@@ -1,6 +1,3 @@
-// signal-proxy/worker.js
-// RSS proxy for The Signal. Accepts ?url= param, fetches feed, returns parsed JSON.
-
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
@@ -54,11 +51,11 @@ export default {
       });
 
       if (!res.ok) {
-        return json({ ok: false, error: `Feed returned ${res.status}`, items: [] });
+        return json({ ok: false, error: "Feed returned " + res.status, items: [] });
       }
       feedText = await res.text();
     } catch (e) {
-      return json({ ok: false, error: `Fetch failed: ${e.message}`, items: [] });
+      return json({ ok: false, error: "Fetch failed: " + e.message, items: [] });
     }
 
     const items = parseXml(feedText);
@@ -67,30 +64,31 @@ export default {
 };
 
 function parseXml(xml) {
+  if (!xml) return [];
   const items = [];
   const isAtom = /<feed[\s>]/i.test(xml);
   const itemTag = isAtom ? "entry" : "item";
-  const blockRe = new RegExp(`<${itemTag}[\\s>]([\\s\\S]*?)<\\/${itemTag}>`, "gi");
-  let match;
+  const blockRe = new RegExp("<" + itemTag + "[\\s>]([\\s\\S]*?)<\\/" + itemTag + ">", "gi");
+  let m;
 
-  while ((match = blockRe.exec(xml)) !== null) {
-    const block = match[1];
-    const title   = extractText(block, "title");
-    const link    = extractLink(block, isAtom);
-    const pubDate = extractText(block, isAtom ? "updated" : "pubDate")
-                 || extractText(block, "dc:date")
-                 || extractText(block, "published");
-    const desc    = extractText(block, "description")
-                 || extractText(block, "summary")
-                 || extractText(block, "content");
+  while ((m = blockRe.exec(xml)) !== null) {
+    const b = m[1];
+    const title   = extractText(b, "title");
+    const link    = extractLink(b, isAtom);
+    const pubDate = extractText(b, isAtom ? "updated" : "pubDate")
+                 || extractText(b, "dc:date")
+                 || extractText(b, "published");
+    const desc    = extractText(b, "description")
+                 || extractText(b, "summary")
+                 || extractText(b, "content");
 
     if (!title && !link) continue;
 
     items.push({
-      title:       decodeEntities(stripTags(title)).trim(),
+      title:       decodeEnt(stripTags(title)).trim(),
       link:        link.trim(),
       pubDate:     pubDate.trim(),
-      description: decodeEntities(stripTags(desc)).substring(0, 300).trim(),
+      description: decodeEnt(stripTags(desc)).substring(0, 300).trim(),
     });
   }
   return items;
@@ -98,7 +96,7 @@ function parseXml(xml) {
 
 function extractText(block, tag) {
   const re = new RegExp(
-    `<${tag}[^>]*>(?:<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>|([\\s\\S]*?))<\\/${tag}>`, "i"
+    "<" + tag + "[^>]*>(?:<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>|([\\s\\S]*?))<\\/" + tag + ">", "i"
   );
   const m = block.match(re);
   if (!m) return "";
@@ -110,16 +108,15 @@ function extractLink(block, isAtom) {
     const hrefMatch = block.match(/<link[^>]+href="([^"]+)"/i);
     if (hrefMatch) return hrefMatch[1];
   }
-  const m = block.match(/<link[^>]*>(?:<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>|([\\s\\S]*?))<\/link>/i);
-  if (m) return (m[1] || m[2] || "").trim();
-  return "";
+  const m = block.match(/<link[^>]*>([^<]+)<\/link>/i);
+  return m ? m[1].trim() : "";
 }
 
 function stripTags(s) {
   return (s || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
 }
 
-function decodeEntities(s) {
+function decodeEnt(s) {
   return (s || "")
     .replace(/&amp;/g,  "&")
     .replace(/&lt;/g,   "<")
