@@ -471,6 +471,57 @@ function dedupKey(title) {
     return title.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 40);
 }
 
+// ── XML PARSER (no third-party dependency) ──
+function parseRSS(xml) {
+    if (!xml) return [];
+    const items = [];
+    const isAtom = /<feed[\s>]/i.test(xml);
+    const tag = isAtom ? 'entry' : 'item';
+    const blockRe = new RegExp(`<${tag}[\\s>]([\\s\\S]*?)<\\/${tag}>`, 'gi');
+    let m;
+    while ((m = blockRe.exec(xml)) !== null) {
+        const b = m[1];
+        const title   = extractXml(b, 'title');
+        const link    = extractLink(b, isAtom);
+        const pubDate = extractXml(b, isAtom ? 'updated' : 'pubDate') || extractXml(b, 'dc:date') || extractXml(b, 'published');
+        const desc    = extractXml(b, 'description') || extractXml(b, 'summary') || extractXml(b, 'content');
+        if (!title && !link) continue;
+        items.push({
+            title:       decodeEnt(stripTags(title)).trim(),
+            link:        link.trim(),
+            pubDate:     pubDate.trim(),
+            description: decodeEnt(stripTags(desc)).substring(0, 300).trim(),
+        });
+    }
+    return items;
+}
+
+function extractXml(block, tag) {
+    const re = new RegExp(`<${tag}[^>]*>(?:<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>|([\\s\\S]*?))<\\/${tag}>`, 'i');
+    const m = block.match(re);
+    if (!m) return '';
+    return (m[1] !== undefined ? m[1] : m[2]) || '';
+}
+
+function extractLink(block, isAtom) {
+    if (isAtom) {
+        const h = block.match(/<link[^>]+href="([^"]+)"/i);
+        if (h) return h[1];
+    }
+    const m = block.match(/<link[^>]*>([^<]+)<\/link>/i);
+    return m ? m[1].trim() : '';
+}
+
+function stripTags(s) { return (s||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' '); }
+
+function decodeEnt(s) {
+    return (s||'')
+        .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+        .replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&apos;/g,"'")
+        .replace(/&#8217;/g,'’').replace(/&#8220;/g,'“').replace(/&#8221;/g,'”')
+        .replace(/&#\d+;/g,'');
+}
+
 // ── FEED FETCHING ──
 async function fetchFeeds() {
     setStatus('SYNCING...');
@@ -478,15 +529,20 @@ async function fetchFeeds() {
     document.getElementById('national-feed').innerHTML = '<div class="feed-status">Loading...</div>';
     Object.values(clusterGroups).forEach(g => g.clearLayers());
 
-    const proxy = "https://api.rss2json.com/v1/api.json?rss_url=";
+    // allorigins.win: free CORS proxy, no rate limits, no API key
+    const PROXY = "https://api.allorigins.win/get?url=";
+
     const now = Date.now();
     let located = 0, national = 0, errors = 0;
 
     const results = await Promise.allSettled(
         ALL_SOURCES.map(src =>
-            fetch(proxy + encodeURIComponent(src.url))
+            fetch(PROXY + encodeURIComponent(src.url))
                 .then(r => r.json())
-                .then(data => ({ src, data }))
+                .then(envelope => {
+                    const items = parseRSS(envelope.contents || '');
+                    return { src, data: { ok: true, items } };
+                })
         )
     );
 
@@ -495,7 +551,7 @@ async function fetchFeeds() {
     results.forEach(result => {
         if (result.status === 'rejected') { errors++; return; }
         const { src, data } = result.value;
-        if (data.status !== 'ok' || !data.items) { errors++; return; }
+        if (!data.ok || !data.items) { errors++; return; }
 
         data.items.forEach(item => {
             const hoursOld = (now - new Date(item.pubDate).getTime()) / 3600000;
