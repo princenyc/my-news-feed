@@ -530,7 +530,7 @@ async function fetchFeeds() {
     Object.values(clusterGroups).forEach(g => g.clearLayers());
 
     // allorigins.win: free CORS proxy, no rate limits, no API key
-    const PROXY = "https://api.allorigins.win/get?url=";
+    const PROXY = "https://my-news-feed.princecampbellnyc.workers.dev/feed?url=";
 
     const now = Date.now();
     let located = 0, national = 0, errors = 0;
@@ -539,10 +539,7 @@ async function fetchFeeds() {
         ALL_SOURCES.map(src =>
             fetch(PROXY + encodeURIComponent(src.url))
                 .then(r => r.json())
-                .then(envelope => {
-                    const items = parseRSS(envelope.contents || '');
-                    return { src, data: { ok: true, items } };
-                })
+                .then(data => ({ src, data }))
         )
     );
 
